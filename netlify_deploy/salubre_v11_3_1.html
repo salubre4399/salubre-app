@@ -2,6 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>sal-u-bre 注文アプリ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1582,7 +1584,10 @@ async function shareOrDownload(filename, mime, content){
 }
 function exportBackup(){
   const data={};
-  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('salubre_')===0) data[k]=localStorage.getItem(k); }
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&(k.indexOf('salubre_')===0||k.indexOf('grex_')===0)) data[k]=localStorage.getItem(k);
+  }
   const payload=JSON.stringify({app:'salubre',exportedAt:new Date().toLocaleString('ja-JP'),data});
   shareOrDownload('salubre_backup_'+ymd()+'.json','application/json',payload);
   showToast('バックアップを書き出します');
@@ -1595,13 +1600,12 @@ function importBackupFile(input){
       const obj=JSON.parse(reader.result);
       const data=(obj&&obj.data)?obj.data:obj;
       if(!data||typeof data!=='object') throw new Error('形式が不正です');
-      const keys=Object.keys(data).filter(k=>k.indexOf('salubre_')===0);
-      if(!keys.length) throw new Error('salubreのデータが見つかりません');
-      if(!confirm('現在のデータを、このバックアップで上書きします。よろしいですか？（'+keys.length+'項目）')){ input.value=''; return; }
+      const keys=Object.keys(data).filter(k=>k.indexOf('salubre_')===0||k.indexOf('grex_')===0);
+      if(!keys.length) throw new Error('データが見つかりません');
       keys.forEach(k=>localStorage.setItem(k,data[k]));
-      alert('読み込みました。アプリを再読み込みします。');
-      location.reload();
-    }catch(e){ alert('読み込みに失敗しました: '+e.message); }
+      showToast('✓ '+keys.length+'項目を復元しました。再読み込みします...');
+      setTimeout(()=>location.reload(),1500);
+    }catch(e){ showToast('読み込みに失敗しました: '+e.message); }
     input.value='';
   };
   reader.readAsText(f);
@@ -2146,12 +2150,21 @@ async function syncToCloud(){
     (STORE_LIST||[]).forEach((sname,sid)=>{
       let data=[]; try{data=JSON.parse(localStorage.getItem(brand+'_stock2_'+sid)||'[]');}catch(e){}
       const last=localStorage.getItem('salubre_lastcheck_'+sid)||'';
-      data.forEach(prod=>{(prod.colors||[]).forEach(col=>{orderSizeKeys(prod.code,col.sizes).forEach(s=>{
-        const qty=col.sizes[s];
-        if(qty===''||qty===null||qty===undefined) return;
-        const lab={out:'欠品',low:'残少',ok:'有'}[getSizeStatus(qty)]||'';
-        stockRows.push([brandLabel,sname,prod.cat||'',prod.name||'',col.cname||'',s,qty,lab,last,syncAt]);
-      });});});
+      data.forEach(prod=>{(prod.colors||[]).forEach(col=>{
+        // 現在数量が空でprevSnapshotがある場合、前回値をフォールバックとして使用
+        const prevCol=(prod.prevSnapshot||[]).find(c=>c.cname===col.cname);
+        orderSizeKeys(prod.code,col.sizes).forEach(s=>{
+          let qty=col.sizes[s];
+          const useDate=last;
+          if(qty===''||qty===null||qty===undefined){
+            const pv=prevCol&&prevCol.sizes?prevCol.sizes[s]:undefined;
+            if(pv===''||pv===null||pv===undefined) return;
+            qty=pv;
+          }
+          const lab={out:'欠品',low:'残少',ok:'有'}[getSizeStatus(qty)]||'';
+          stockRows.push([brandLabel,sname,prod.cat||'',prod.name||'',col.cname||'',s,qty,lab,useDate,syncAt]);
+        });
+      });});
     });
   });
   fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_orders',user:user,orders:orderRows})}).catch(()=>{});
@@ -2450,32 +2463,57 @@ async function fetchPrevStockFromCloud(){
     const res=await fetch(CLOUD_WEBHOOK+'?action=get_data');
     const json=await res.json();
     const rows=(json.stock||[]).slice(1);
-    // この店舗・このブランドの行を抽出
     const storeRows=rows.filter(r=>String(r[2])===storeName&&String(r[1])===brandLabel);
-    if(!storeRows.length){showToast('クラウドにこの店舗のデータがまだありません');return;}
-    // 商品名→カラー→浮力→在庫数 に集約
+    if(!storeRows.length){
+      // デバッグ: クラウドにある店名・ブランドの一覧を表示
+      const found=[...new Set(rows.map(r=>r[1]+'|'+r[2]))].slice(0,5).join(' / ');
+      showToast('「'+storeName+'」('+brandLabel+') 未一致。クラウド例: '+found);
+      return;
+    }
+    // 商品名→{cat, colors:{カラー名:{サイズ:qty}}} に集約
     const byProd={};
+    const prodOrder=[];
     let latestDate='';
     storeRows.forEach(r=>{
-      const pname=String(r[4]),color=String(r[5]),size=String(r[6]),qty=r[7],chk=String(r[9]||'');
-      if(!byProd[pname])byProd[pname]={};
-      if(!byProd[pname][color])byProd[pname][color]={};
-      byProd[pname][color][size]=qty;
+      const pname=String(r[4]),cat=String(r[3]||''),color=String(r[5]),size=String(r[6]),qty=r[7],chk=String(r[9]||'');
+      if(!byProd[pname]){byProd[pname]={cat,colors:{}};prodOrder.push(pname);}
+      if(!byProd[pname].colors[color])byProd[pname].colors[color]={};
+      byProd[pname].colors[color][size]=qty;
       if(chk&&(!latestDate||chk>latestDate))latestDate=chk;
     });
-    // ローカルの商品に前回データとして適用
-    const data=loadStoreProducts(currentStoreId);
+    let data=loadStoreProducts(currentStoreId);
+    // 商品が未登録なら、クラウドデータから商品構成を自動生成
+    if(!data.length){
+      data=prodOrder.map(pname=>{
+        const info=byProd[pname];
+        const colors=Object.keys(info.colors).map(cn=>({
+          cname:cn,
+          sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))
+        }));
+        return{code:pname,name:pname,cat:info.cat,colors,prevSnapshot:colors.map(c=>({cname:c.cname,sizes:{...info.colors[c.cname]}})),prevDate:latestDate||'クラウド'};
+      });
+      saveStoreProducts(currentStoreId,data);
+      renderStockList();
+      showToast('✓ '+data.length+'商品をクラウドから復元しました'+(latestDate?'（'+latestDate+'）':''));
+      return;
+    }
+    // 既存商品がある場合は前回スナップショットを更新
     let cnt=0;
     data.forEach(prod=>{
       if(!byProd[prod.name])return;
       prod.prevSnapshot=prod.colors.map(c=>{
-        const cn=c.cname||c.colorName||'—';
-        return{cname:cn,sizes:byProd[prod.name][cn]||{}};
+        const cn=c.cname||'—';
+        return{cname:cn,sizes:byProd[prod.name].colors[cn]||{}};
       });
       prod.prevDate=latestDate||'クラウド';
       cnt++;
     });
-    if(!cnt){showToast('一致する商品データが見つかりませんでした');return;}
+    if(!cnt){
+      const localNames=data.slice(0,2).map(p=>p.name).join(',');
+      const cloudNames=Object.keys(byProd).slice(0,2).join(',');
+      showToast('ローカル:「'+localNames+'」/ クラウド:「'+cloudNames+'」');
+      return;
+    }
     saveStoreProducts(currentStoreId,data);
     renderStockList();
     showToast('✓ '+cnt+'商品の前回データを読み込みました'+(latestDate?'（'+latestDate+'）':''));
@@ -2490,10 +2528,11 @@ function completeStockCheck(){
   const dateObj = raw ? new Date(raw) : new Date();
   const visitDate = dateObj.getFullYear()+'/'+(dateObj.getMonth()+1)+'/'+(dateObj.getDate());
   const data = loadStoreProducts(currentStoreId);
+  // リセット前にクラウドへ同期（他担当の前回取得に使われる）
+  syncToCloud();
   data.forEach(prod=>{
     prod.prevSnapshot = prod.colors.map(c=>({cname:c.cname,sizes:{...c.sizes}}));
     prod.prevDate = visitDate;
-    // 次回入力のために数量をリセット
     prod.colors.forEach(col=>{ Object.keys(col.sizes||{}).forEach(k=>{ col.sizes[k]=''; }); });
   });
   saveStoreProducts(currentStoreId, data);
