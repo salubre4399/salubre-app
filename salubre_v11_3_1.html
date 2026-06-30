@@ -345,6 +345,7 @@ svg{display:inline-block;vertical-align:middle}
       <button onclick="buildReplenishOrder()" style="flex:1;height:36px;background:var(--accent-dark);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📋 補充発注書を作成</button>
       <button onclick="printStockPDF()" style="height:36px;padding:0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">📄 PDF</button>
       <button onclick="openBulkRatioModal()" style="height:36px;padding:0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">⚖️ 比率</button>
+      <button onclick="resetStoreData()" style="height:36px;padding:0 12px;background:none;border:1px solid #c0392b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#c0392b;white-space:nowrap">🗑 店舗リセット</button>
     </div>
     <div id="stock-photos-wrap" style="margin:0 14px 10px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -2530,6 +2531,15 @@ async function fetchPrevStockFromCloud(){
   }catch(e){
     showToast('取得エラー: '+e.message);
   }
+}
+function resetStoreData(){
+  if(currentStoreId===null) return;
+  const storeName=STORE_LIST[parseInt(currentStoreId)];
+  if(!confirm(storeName+'のデータをリセットします。よろしいですか？')) return;
+  localStorage.removeItem(getStockKey(currentStoreId));
+  localStorage.removeItem('salubre_lastcheck_'+currentStoreId);
+  renderStockList();
+  showToast('🗑 '+storeName+'のデータをリセットしました');
 }
 function completeStockCheck(){
   if(currentStoreId===null) return;
