@@ -2479,13 +2479,33 @@ async function fetchPrevStockFromCloud(){
     let data=loadStoreProducts(currentStoreId);
     // 商品が未登録なら、クラウドデータから商品構成を自動生成
     if(!data.length){
+      const db=getDB();
       data=prodOrder.map(pname=>{
         const info=byProd[pname];
-        const colors=Object.keys(info.colors).map(cn=>({
-          cname:cn,
-          sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))
-        }));
-        return{code:pname,name:pname,cat:info.cat,colors,prevSnapshot:colors.map(c=>({cname:c.cname,sizes:{...info.colors[c.cname]}})),prevDate:latestDate||'クラウド'};
+        const master=db.find(p=>p.name===pname);
+        let colors;
+        if(master){
+          // マスターDBの正しいサイズ構成を使用
+          colors=master.colors.map(cn=>({
+            cname:cn,
+            sizes:Object.fromEntries(master.sizes.map(s=>[s,'']))
+          }));
+        } else {
+          // マスターにない場合はクラウドのデータから構成
+          colors=Object.keys(info.colors).map(cn=>({
+            cname:cn,
+            sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))
+          }));
+        }
+        // クラウドデータを前回スナップショットとして設定
+        const prevSnapshot=colors.map(c=>({cname:c.cname,sizes:{...(info.colors[c.cname]||{})}}));
+        return{
+          code:master?master.code:pname,
+          name:pname,
+          cat:master?master.cat:info.cat,
+          colors,prevSnapshot,
+          prevDate:latestDate||'クラウド'
+        };
       });
       saveStoreProducts(currentStoreId,data);
       renderStockList();
