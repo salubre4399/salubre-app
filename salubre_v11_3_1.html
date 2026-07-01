@@ -339,6 +339,7 @@ svg{display:inline-block;vertical-align:middle}
       <input type="date" id="visit-date" style="height:32px;border:1px solid var(--border);border-radius:6px;font-size:12px;padding:0 6px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif">
       <button onclick="completeStockCheck()" style="height:32px;padding:0 12px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 確認完了</button>
       <button onclick="fetchPrevStockFromCloud()" style="height:32px;padding:0 10px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">☁ 前回取得</button>
+      <button onclick="restorePrevSnapshot()" style="height:32px;padding:0 10px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">↺ 前回値を復元</button>
       <div id="stock-last-check" style="font-size:10px;color:var(--text3);flex:1;text-align:right"></div>
     </div>
     <div style="display:flex;gap:6px;margin:0 14px 8px">
@@ -2531,6 +2532,25 @@ async function fetchPrevStockFromCloud(){
   }catch(e){
     showToast('取得エラー: '+e.message);
   }
+}
+function restorePrevSnapshot(){
+  if(currentStoreId===null) return;
+  const data=loadStoreProducts(currentStoreId);
+  let cnt=0;
+  data.forEach(prod=>{
+    if(!prod.prevSnapshot||!prod.prevSnapshot.length) return;
+    prod.colors.forEach(col=>{
+      const prev=prod.prevSnapshot.find(c=>c.cname===col.cname);
+      if(!prev) return;
+      Object.keys(col.sizes||{}).forEach(k=>{
+        const pv=prev.sizes&&prev.sizes[k];
+        if(pv!==''&&pv!==null&&pv!==undefined){col.sizes[k]=pv;cnt++;}
+      });
+    });
+  });
+  saveStoreProducts(currentStoreId,data);
+  renderStockList();
+  showToast('↺ 前回値を呼び戻しました（'+cnt+'項目）');
 }
 function resetStoreData(){
   if(currentStoreId===null) return;
