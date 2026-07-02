@@ -334,20 +334,25 @@ svg{display:inline-block;vertical-align:middle}
         <div style="font-size:10px;color:#7a40c8">⚠️ 動きなし</div>
       </div>
     </div>
-    <div style="margin:0 14px 8px;display:flex;gap:6px;align-items:center">
-      <button onclick="openStockAddModal()" style="height:32px;padding:0 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">＋ 商品を追加</button>
-      <input type="date" id="visit-date" style="height:32px;border:1px solid var(--border);border-radius:6px;font-size:12px;padding:0 6px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif">
-      <button onclick="completeStockCheck()" style="height:32px;padding:0 12px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 確認完了</button>
-      <button onclick="fetchPrevStockFromCloud()" style="height:32px;padding:0 10px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">☁ 前回取得</button>
-      <button onclick="restorePrevSnapshot()" style="height:32px;padding:0 10px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">↺ 前回値を復元</button>
-      <div id="stock-last-check" style="font-size:10px;color:var(--text3);flex:1;text-align:right"></div>
+    <!-- 行1: 主要アクション -->
+    <div style="margin:0 14px 6px;display:flex;gap:6px;align-items:center">
+      <button onclick="openStockAddModal()" style="height:34px;padding:0 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">＋ 追加</button>
+      <input type="date" id="visit-date" style="flex:1;height:34px;border:1px solid var(--border);border-radius:6px;font-size:12px;padding:0 6px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-width:0">
+      <button onclick="completeStockCheck()" style="height:34px;padding:0 14px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 確認完了</button>
     </div>
+    <!-- 行2: 書類系 -->
+    <div style="display:flex;gap:6px;margin:0 14px 6px">
+      <button onclick="buildReplenishOrder()" style="flex:1;height:34px;background:var(--accent-dark);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📋 補充発注書</button>
+      <button onclick="printStockPDF()" style="height:34px;padding:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">📄 PDF</button>
+      <button onclick="openBulkRatioModal()" style="height:34px;padding:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">⚖️ 比率</button>
+    </div>
+    <!-- 行3: データ管理（小） -->
     <div style="display:flex;gap:6px;margin:0 14px 8px">
-      <button onclick="buildReplenishOrder()" style="flex:1;height:36px;background:var(--accent-dark);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📋 補充発注書を作成</button>
-      <button onclick="printStockPDF()" style="height:36px;padding:0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">📄 PDF</button>
-      <button onclick="openBulkRatioModal()" style="height:36px;padding:0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--text2);white-space:nowrap">⚖️ 比率</button>
-      <button onclick="resetStoreData()" style="height:36px;padding:0 12px;background:none;border:1px solid #c0392b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#c0392b;white-space:nowrap">🗑 店舗リセット</button>
+      <button onclick="fetchPrevStockFromCloud()" style="flex:1;height:30px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 前回取得</button>
+      <button onclick="restorePrevSnapshot()" style="flex:1;height:30px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">↺ 前回値を復元</button>
+      <button onclick="resetStoreData()" style="flex:1;height:30px;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🗑 店舗リセット</button>
     </div>
+    <div id="stock-last-check" style="font-size:10px;color:var(--text3);text-align:right;margin:-4px 14px 6px"></div>
     <div id="stock-photos-wrap" style="margin:0 14px 10px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <span style="font-size:11px;font-weight:700;color:var(--text2)">📸 売り場写真</span>
@@ -1164,6 +1169,11 @@ function renderProducts(){
           カラーを追加
         </button>
       </div>
+      ${p.kind==='return'?`<div style="padding:6px 12px 8px;border-top:1px solid var(--border)">
+        <input type="text" placeholder="備考（廃盤・理由など自由記入）" value="${p.memo||''}"
+          style="width:100%;height:32px;border:1px solid var(--border);border-radius:6px;font-size:12px;padding:0 8px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif;box-sizing:border-box"
+          data-pid="${p.id}" oninput="updateProductMemo(this)">
+      </div>`:''}
       <div class="product-footer">
         <span class="product-footer-total" id="footer-${p.id}">小計: <strong>${ta?'¥'+ta.toLocaleString():'—'}</strong>（${tq}個）</span>
       </div>
@@ -1246,6 +1256,10 @@ function updateDiscount(el){
   if(hs)hs.textContent=tq?('×'+tq+' ¥'+ta.toLocaleString()):'未入力';
   calcTotals();
 }
+function updateProductMemo(el){
+  const p=products.find(x=>x.id===parseInt(el.dataset.pid));
+  if(p) p.memo=el.value;
+}
 function calcTotals(){
   let oq=0,oa=0,rq=0,ra=0;
   products.forEach(p=>{
@@ -1291,7 +1305,7 @@ function buildOrderData(){
       let q=0;p.colors.forEach(cl=>p.availSizes.forEach(s=>q+=parseInt(cl.sizes[s]||0)));
       const amt=Math.round(q*(p.priceO||0)*((p.discount||0)/100));
       tq+=q;ta+=amt;
-      return{code:p.code,name:p.name,priceO:p.priceO,discount:p.discount,colorDetails:cd,qty:q,amt};
+      return{code:p.code,name:p.name,priceO:p.priceO,discount:p.discount,colorDetails:cd,qty:q,amt,memo:p.memo||''};
     });
     return{items,totalQty:tq,totalAmt:ta};
   }
@@ -1458,6 +1472,7 @@ function buildEmailHTML(d){
         <tr style="background:#e8e8e8"><th style="${TD};font-size:11px;color:#333;text-align:left;width:26%">カラー</th><th style="${TD};font-size:11px;color:#333;width:16%">浮力</th><th style="${TD};font-size:11px;color:#333;width:40%">JANコード</th><th style="${TD};font-size:11px;color:#333;width:18%">数量</th></tr>
         ${skuRows}
       </table>
+      ${item.memo?`<div style="padding:6px 10px;background:#fff8f8;border-top:1px solid #f5c6cb;font-size:12px;color:#c0392b">\u{1F4DD} ${escHtml(item.memo)}</div>`:''}
     </div>`;
   }
   const items=d.items.map((it,i)=>block(it,i,'#1f4a6b')).join('');
