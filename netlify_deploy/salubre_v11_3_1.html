@@ -264,8 +264,9 @@ svg{display:inline-block;vertical-align:middle}
     <button class="btn btn-outline" style="flex:1;height:44px;color:#c0392b;border-color:#c0392b" onclick="openProductModal('return')">＋ 引き去りを追加</button>
     <button class="btn btn-outline" style="flex:1;height:44px;color:#c0392b;border-color:#c0392b" onclick="openCamera('return')">📷 スキャンで追加</button>
   </div>
-  <div style="padding:0 14px;margin-bottom:10px">
-    <button class="btn btn-outline" style="width:100%;height:40px;color:#c0392b;border-color:#c0392b;font-size:13px" onclick="openStockReturnModal()">📦 在庫から選択</button>
+  <div style="padding:0 14px;margin-bottom:4px;display:flex;gap:8px">
+    <button class="btn btn-outline" style="flex:1;height:40px;color:#c0392b;border-color:#c0392b;font-size:13px" onclick="openStockReturnModal()">📦 在庫から選択</button>
+    <button class="btn btn-outline" style="flex:1;height:40px;color:#c0392b;border-color:#c0392b;font-size:13px" onclick="openFreeReturnModal()">✏️ 廃盤・自由入力</button>
   </div>
   <div id="return-summary" style="display:none;margin:0 14px 12px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface)">
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2)"><span>引き去り合計（卸値）</span><span id="return-amount" style="font-weight:700;color:var(--text)">¥0</span></div>
@@ -446,6 +447,41 @@ svg{display:inline-block;vertical-align:middle}
       <div style="display:flex;gap:8px;flex-shrink:0;margin-top:12px">
         <button class="btn btn-outline" style="flex:1" onclick="closeModal('bulk-ratio-modal')">キャンセル</button>
         <button class="btn btn-primary" style="flex:1" onclick="saveRatioPreset()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 廃盤・自由入力 引き去りモーダル -->
+  <div class="modal-overlay" id="free-return-modal" onclick="closeModalOutside(event,'free-return-modal')">
+    <div class="modal-sheet">
+      <div class="modal-title" style="color:#c0392b">✏️ 廃盤・自由入力（引き去り）</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">商品名</div>
+          <input id="fr-name" type="text" placeholder="例：エクシオアーツ S" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 10px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif;box-sizing:border-box">
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">定価（円）</div>
+            <input id="fr-price" type="number" min="0" placeholder="3100" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 10px;background:var(--surface);color:var(--text);font-family:'DM Mono',monospace;box-sizing:border-box">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">掛率（%）</div>
+            <input id="fr-discount" type="number" min="1" max="100" value="60" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 10px;background:var(--surface);color:var(--text);font-family:'DM Mono',monospace;box-sizing:border-box">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">数量</div>
+            <input id="fr-qty" type="number" min="0" placeholder="0" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 10px;background:var(--surface);color:var(--text);font-family:'DM Mono',monospace;box-sizing:border-box">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">備考（理由・カラーなど）</div>
+          <input id="fr-memo" type="text" placeholder="例：廃盤品 オレンジ 00〜B" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 10px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('free-return-modal')">キャンセル</button>
+        <button class="btn btn-primary" style="flex:1;background:#c0392b;border-color:#c0392b" onclick="addFreeReturn()">追加</button>
       </div>
     </div>
   </div>
@@ -1255,6 +1291,31 @@ function updateDiscount(el){
   const hs=document.getElementById('hsum-'+pid);
   if(hs)hs.textContent=tq?('×'+tq+' ¥'+ta.toLocaleString()):'未入力';
   calcTotals();
+}
+function openFreeReturnModal(){
+  ['fr-name','fr-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const qty=document.getElementById('fr-qty');if(qty)qty.value='';
+  document.getElementById('free-return-modal').classList.add('show');
+  setTimeout(()=>{const n=document.getElementById('fr-name');if(n)n.focus();},200);
+}
+function addFreeReturn(){
+  const name=(document.getElementById('fr-name').value||'').trim();
+  if(!name){showToast('商品名を入力してください');return;}
+  const price=parseInt(document.getElementById('fr-price').value)||0;
+  const discount=parseInt(document.getElementById('fr-discount').value)||60;
+  const qty=parseInt(document.getElementById('fr-qty').value)||0;
+  const memo=(document.getElementById('fr-memo').value||'').trim();
+  const newId=Date.now();
+  const newProd={
+    id:newId,code:'FREE_'+newId,name,cat:'その他',
+    priceO:price,discount,kind:'return',memo,
+    availSizes:['合計'],
+    colors:[{colorId:'c0',colorName:'—',hex:'#888888',sizes:{'合計':qty||''}}]
+  };
+  products.push(newProd);
+  renderProducts();
+  closeModal('free-return-modal');
+  showToast('↩️ '+name+' を引き去りに追加しました');
 }
 function updateProductMemo(el){
   const p=products.find(x=>x.id===parseInt(el.dataset.pid));
