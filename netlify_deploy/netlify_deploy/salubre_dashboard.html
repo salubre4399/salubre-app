@@ -1,0 +1,312 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sal-u-bre ダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:#f5f3ef;color:#1a1816;font-size:13px}
+.header{background:#0f3d5e;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:18px;font-weight:700}
+.header-sub{font-size:11px;opacity:.7;flex:1}
+#sync-info{font-size:11px;opacity:.8;text-align:right}
+.tabs{display:flex;border-bottom:2px solid #ddd9d2;background:#fff;padding:0 24px}
+.tab-btn{padding:10px 20px;font-size:13px;font-weight:700;color:#9e9990;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:'Noto Sans JP',sans-serif;transition:color .15s}
+.tab-btn.active{color:#1a5c8a;border-bottom-color:#1a5c8a}
+.tab-btn:hover:not(.active){color:#555}
+.content{padding:20px 24px;max-width:1400px}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:6px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;transition:opacity .1s}
+.btn:hover{opacity:.85}
+.btn-primary{background:#1a5c8a;color:#fff}
+.btn-outline{background:#fff;color:#555;border:1px solid #ddd}
+.btn-success{background:#1a7a4a;color:#fff}
+input.search{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;min-width:200px}
+input.search:focus{border-color:#1a5c8a}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.badge-out{background:#fdf0ef;color:#c0392b}
+.badge-low{background:#fef6ed;color:#b5600a}
+.badge-ok{background:#eaf5f0;color:#1a7a4a}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 18px}
+.stat-label{font-size:11px;color:#9e9990;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:700;font-family:'DM Mono',monospace}
+.stat-sub{font-size:11px;color:#9e9990;margin-top:2px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+thead tr{background:#1a5c8a;color:#fff}
+th{padding:8px 12px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap}
+th.r,td.r{text-align:right}
+th.c,td.c{text-align:center}
+tbody tr:hover{background:#f5f8fb}
+tbody tr:nth-child(even){background:#fafaf9}
+tbody tr:nth-child(even):hover{background:#f0f4f8}
+td{padding:6px 12px;border-bottom:1px solid #eee;font-size:12px}
+.cat-row td{background:#e8f2f9;color:#0f3d5e;font-weight:700;font-size:11px;padding:4px 12px}
+.no-data{text-align:center;padding:40px;color:#9e9990;font-size:13px}
+.panel{display:none}
+.panel.active{display:block}
+#loading{text-align:center;padding:60px;color:#9e9990;font-size:14px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+select.filter{height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;background:#fff}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>sal-u-bre ダッシュボード</h1>
+    <div class="header-sub">営業データ管理 — PC閲覧用</div>
+  </div>
+  <div id="sync-info">読み込み中...</div>
+  <button class="btn btn-outline" style="margin-left:12px" onclick="loadData()">🔄 最新データ取得</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showPanel('orders')">📦 注文履歴</button>
+  <button class="tab-btn" onclick="showPanel('stock')">🏪 在庫一覧</button>
+  <button class="tab-btn" onclick="showPanel('summary')">📊 集計</button>
+</div>
+
+<div class="content">
+  <div id="loading">データを読み込み中...</div>
+
+  <!-- 注文履歴パネル -->
+  <div id="panel-orders" class="panel" style="display:none">
+    <div class="toolbar">
+      <input class="search" type="text" id="order-search" placeholder="店名・商品名で絞り込み..." oninput="renderOrders()">
+      <select class="filter" id="order-store-filter" onchange="renderOrders()"><option value="">全店舗</option></select>
+      <select class="filter" id="order-kind-filter" onchange="renderOrders()">
+        <option value="">全区分</option><option value="注文">注文</option><option value="引き去り">引き去り</option>
+      </select>
+      <span id="order-count" style="font-size:12px;color:#9e9990;margin-left:4px"></span>
+      <button class="btn btn-success" onclick="exportOrdersToCSV()" style="margin-left:auto">📥 CSVダウンロード</button>
+    </div>
+    <table id="orders-table">
+      <thead><tr>
+        <th>営業担当</th><th>送信日時</th><th>注文日</th><th>店名</th><th>担当者</th><th>帳合先</th>
+        <th>区分</th><th>商品名</th><th class="c">掛率</th><th>カラー</th><th>浮力(数量)</th>
+        <th class="r">数量</th><th class="r">金額</th>
+      </tr></thead>
+      <tbody id="orders-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 在庫一覧パネル -->
+  <div id="panel-stock" class="panel" style="display:none">
+    <div class="toolbar">
+      <input class="search" type="text" id="stock-search" placeholder="商品名・カラーで絞り込み..." oninput="renderStock()">
+      <select class="filter" id="stock-brand-filter" onchange="renderStock()"><option value="">全ブランド</option><option value="ソルブレ">ソルブレ</option><option value="GREX">GREX</option></select>
+      <select class="filter" id="stock-store-filter" onchange="renderStock()"><option value="">全店舗</option></select>
+      <select class="filter" id="stock-status-filter" onchange="renderStock()">
+        <option value="">全状態</option><option value="欠品">🔴 欠品</option>
+        <option value="残少">🟡 残少</option><option value="有">🟢 在庫あり</option>
+      </select>
+      <span id="stock-count" style="font-size:12px;color:#9e9990;margin-left:4px"></span>
+      <button class="btn btn-success" onclick="exportStockToCSV()" style="margin-left:auto">📥 CSVダウンロード</button>
+    </div>
+    <table id="stock-table">
+      <thead><tr>
+        <th>営業担当</th><th>ブランド</th><th>店名</th><th>カテゴリ</th><th>商品名</th><th>カラー</th>
+        <th class="c">浮力</th><th class="c">在庫数</th><th class="c">状態</th>
+        <th>最終確認</th><th>同期日時</th>
+      </tr></thead>
+      <tbody id="stock-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 集計パネル -->
+  <div id="panel-summary" class="panel" style="display:none">
+    <div class="stat-row" id="stat-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px">店舗別 注文金額 TOP</div>
+        <table><thead><tr><th>店舗</th><th class="r">注文金額</th><th class="r">件数</th></tr></thead>
+        <tbody id="store-summary"></tbody></table>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px">欠品・残少 商品一覧</div>
+        <table><thead><tr><th>店舗</th><th>商品名</th><th>カラー</th><th class="c">浮力</th><th class="c">在庫</th><th class="c">状態</th></tr></thead>
+        <tbody id="alert-summary"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEBHOOK = 'https://script.google.com/macros/s/AKfycbwpgA72jDaW4TCvaCO2WY5T7VnGFQhhUtV4OgBKN5b7-SRDUA_9VM9oCJHAgNL_OG9N/exec';
+let ordersData = [];  // [headers, row, row, ...]
+let stockData  = [];
+
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+async function loadData(){
+  document.getElementById('loading').style.display='block';
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  try{
+    const res = await fetch(WEBHOOK+'?action=get_data');
+    const json = await res.json();
+    ordersData = json.orders || [];
+    stockData  = json.stock  || [];
+    const at = json.synced_at ? new Date(json.synced_at).toLocaleString('ja-JP') : '—';
+    document.getElementById('sync-info').textContent = '最終取得: '+at;
+    buildFilters();
+    renderOrders();
+    renderStock();
+    renderSummary();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('panel-orders').style.display='block';
+    document.getElementById('panel-orders').classList.add('active');
+  }catch(e){
+    document.getElementById('loading').textContent='データの取得に失敗しました。GASのURLを確認してください。\n\nエラー: '+e.message;
+  }
+}
+
+function buildFilters(){
+  // 注文：店舗（r[3]が店名、r[0]が営業担当）
+  const oStores=[...new Set((ordersData.slice(1)||[]).map(r=>r[3]).filter(Boolean))].sort();
+  const oSel=document.getElementById('order-store-filter');
+  oSel.innerHTML='<option value="">全店舗</option>'+oStores.map(s=>'<option>'+esc(s)+'</option>').join('');
+  // 在庫：店舗（r[2]が店名）
+  const sStores=[...new Set((stockData.slice(1)||[]).map(r=>r[2]).filter(Boolean))].sort();
+  const sSel=document.getElementById('stock-store-filter');
+  sSel.innerHTML='<option value="">全店舗</option>'+sStores.map(s=>'<option>'+esc(s)+'</option>').join('');
+}
+
+function renderOrders(){
+  // 列: [0]営業担当 [1]送信日時 [2]注文日 [3]店名 [4]担当者 [5]帳合先 [6]区分 [7]商品名 [8]掛率% [9]カラー [10]浮力 [11]数量 [12]金額
+  const q=(document.getElementById('order-search').value||'').toLowerCase();
+  const store=document.getElementById('order-store-filter').value;
+  const kind=document.getElementById('order-kind-filter').value;
+  const rows=(ordersData.length>1?ordersData.slice(1):[]).filter(r=>{
+    if(store&&r[3]!==store) return false;
+    if(kind&&r[6]!==kind) return false;
+    if(q&&!(r[0]+r[3]+r[7]+r[9]).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('order-count').textContent=rows.length+'件';
+  const tbody=document.getElementById('orders-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="13" class="no-data">データがありません</td></tr>';return;}
+  tbody.innerHTML=rows.map(r=>{
+    const isRet=r[6]==='引き去り';
+    const amt=r[12]?'¥'+Number(r[12]).toLocaleString():'';
+    return '<tr style="'+(isRet?'color:#c0392b':'')+'">'
+      +'<td style="font-weight:700;color:#1a5c8a">'+esc(r[0])+'</td>'
+      +'<td style="white-space:nowrap;font-size:11px;color:#9e9990">'+esc(r[1])+'</td>'
+      +'<td style="white-space:nowrap">'+esc(r[2])+'</td>'
+      +'<td style="font-weight:700">'+esc(r[3])+'</td>'
+      +'<td>'+esc(r[4])+'</td>'
+      +'<td style="font-size:11px;color:#9e9990">'+esc(r[5])+'</td>'
+      +'<td><span class="pill" style="background:'+(isRet?'#fdecea':'#e8f2f9')+';color:'+(isRet?'#c0392b':'#1a5c8a')+'">'+esc(r[6])+'</span></td>'
+      +'<td style="font-weight:700">'+esc(r[7])+'</td>'
+      +'<td class="c" style="font-size:11px;color:#9e9990">'+esc(r[8])+'%</td>'
+      +'<td>'+esc(r[9])+'</td>'
+      +'<td style="font-size:11px;color:#9e9990">'+esc(r[10])+'</td>'
+      +'<td class="r" style="font-weight:700;font-family:monospace">'+esc(r[11])+'</td>'
+      +'<td class="r" style="font-weight:700">'+amt+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function renderStock(){
+  // 列: [0]営業担当 [1]ブランド [2]店名 [3]カテゴリ [4]商品名 [5]カラー [6]浮力 [7]在庫数 [8]状態 [9]最終確認 [10]同期日時
+  const q=(document.getElementById('stock-search').value||'').toLowerCase();
+  const brand=document.getElementById('stock-brand-filter').value;
+  const store=document.getElementById('stock-store-filter').value;
+  const status=document.getElementById('stock-status-filter').value;
+  const rows=(stockData.length>1?stockData.slice(1):[]).filter(r=>{
+    if(brand&&r[1]!==brand) return false;
+    if(store&&r[2]!==store) return false;
+    if(status&&r[8]!==status) return false;
+    if(q&&!(r[0]+r[1]+r[4]+r[5]).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('stock-count').textContent=rows.length+'行';
+  const sBg={欠品:'#fdf0ef',残少:'#fef6ed',有:'#eaf5f0'};
+  const sCol={欠品:'#c0392b',残少:'#b5600a',有:'#1a7a4a'};
+  const tbody=document.getElementById('stock-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="11" class="no-data">データがありません</td></tr>';return;}
+  const brandColor={'ソルブレ':'#1a5c8a','GREX':'#7a1a8a'};
+  tbody.innerHTML=rows.map(r=>{
+    const st=r[8]||'';
+    const bg=st?sBg[st]||'':'';
+    const col=st?sCol[st]||'#555':'#555';
+    return '<tr>'
+      +'<td style="font-weight:700;color:#1a5c8a">'+esc(r[0])+'</td>'
+      +'<td><span class="pill" style="background:#f0eafa;color:'+(brandColor[r[1]]||'#555')+'">'+esc(r[1])+'</span></td>'
+      +'<td style="font-weight:700">'+esc(r[2])+'</td>'
+      +'<td style="font-size:11px;color:#9e9990">'+esc(r[3])+'</td>'
+      +'<td style="font-weight:700">'+esc(r[4])+'</td>'
+      +'<td>'+esc(r[5])+'</td>'
+      +'<td class="c" style="font-family:monospace;font-size:11px">'+esc(r[6])+'</td>'
+      +'<td class="c" style="font-weight:700;background:'+bg+';color:'+col+'">'+esc(r[7])+'</td>'
+      +'<td class="c"><span class="badge" style="background:'+bg+';color:'+col+'">'+st+'</span></td>'
+      +'<td style="font-size:11px;color:#9e9990">'+esc(r[9])+'</td>'
+      +'<td style="font-size:11px;color:#9e9990">'+esc(r[10])+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function renderSummary(){
+  const oRows=ordersData.length>1?ordersData.slice(1):[];
+  const sRows=stockData.length>1?stockData.slice(1):[];
+  // 統計
+  const totalAmt=oRows.filter(r=>r[6]==='注文').reduce((s,r)=>s+(Number(r[12])||0),0);
+  const totalQty=oRows.filter(r=>r[6]==='注文').reduce((s,r)=>s+(Number(r[11])||0),0);
+  // 集計: 注文 r[6]=区分, r[11]=数量, r[12]=金額, r[3]=店名
+  //       在庫 [0]営業担当 [1]ブランド [2]店名 [3]カテゴリ [4]商品名 [5]カラー [6]浮力 [7]在庫数 [8]状態
+  const outCnt=sRows.filter(r=>r[8]==='欠品').length;
+  const lowCnt=sRows.filter(r=>r[8]==='残少').length;
+  document.getElementById('stat-cards').innerHTML=[
+    {label:'注文合計金額',val:'¥'+totalAmt.toLocaleString(),sub:'（税別）',c:'#1a5c8a'},
+    {label:'注文合計個数',val:totalQty+'個',sub:'全期間',c:'#1a5c8a'},
+    {label:'欠品商品数',val:outCnt+'件',sub:'在庫0の浮力',c:'#c0392b'},
+    {label:'残少商品数',val:lowCnt+'件',sub:'在庫1の浮力',c:'#b5600a'},
+  ].map(s=>'<div class="stat-card"><div class="stat-label">'+s.label+'</div><div class="stat-val" style="color:'+s.c+'">'+s.val+'</div><div class="stat-sub">'+s.sub+'</div></div>').join('');
+  // 店舗別注文
+  const byStore={};
+  oRows.filter(r=>r[6]==='注文').forEach(r=>{
+    const k=r[3]||'—';
+    if(!byStore[k])byStore[k]={amt:0,cnt:0};
+    byStore[k].amt+=Number(r[12])||0; byStore[k].cnt++;
+  });
+  const storeArr=Object.entries(byStore).sort((a,b)=>b[1].amt-a[1].amt).slice(0,10);
+  document.getElementById('store-summary').innerHTML=storeArr.length
+    ? storeArr.map(([k,v])=>'<tr><td style="font-weight:700">'+esc(k)+'</td><td class="r" style="font-weight:700">¥'+v.amt.toLocaleString()+'</td><td class="r">'+v.cnt+'</td></tr>').join('')
+    : '<tr><td colspan="3" class="no-data">データなし</td></tr>';
+  // 欠品・残少リスト
+  const alerts=sRows.filter(r=>r[8]==='欠品'||r[8]==='残少').slice(0,20);
+  document.getElementById('alert-summary').innerHTML=alerts.length
+    ? alerts.map(r=>{const st=r[8]||'';const c={欠品:'#c0392b',残少:'#b5600a'}[st]||'#555';return '<tr><td style="font-size:11px;color:#1a5c8a">'+esc(r[0])+'</td><td style="font-weight:700">'+esc(r[4])+'</td><td>'+esc(r[5])+'</td><td class="c" style="font-family:monospace;font-size:11px">'+esc(r[6])+'</td><td class="c" style="color:'+c+';font-weight:700">'+esc(r[7])+'</td><td class="c"><span class="badge" style="background:'+(st==='欠品'?'#fdf0ef':'#fef6ed')+';color:'+c+'">'+st+'</span></td></tr>';}).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#1a7a4a;font-weight:700">✓ 欠品・残少なし</td></tr>';
+}
+
+function exportOrdersToCSV(){
+  if(!ordersData.length){alert('データがありません');return;}
+  const csv='﻿'+ordersData.map(r=>r.map(c=>csvCell(c)).join(',')).join('\r\n');
+  download('salubre_orders_dashboard.csv', csv);
+}
+function exportStockToCSV(){
+  if(!stockData.length){alert('データがありません');return;}
+  const csv='﻿'+stockData.map(r=>r.map(c=>csvCell(c)).join(',')).join('\r\n');
+  download('salubre_stock_dashboard.csv', csv);
+}
+function download(name, content){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(content);
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function csvCell(c){ const s=String(c==null?'':c); return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+loadData();
+</script>
+</body>
+</html>
