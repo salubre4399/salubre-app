@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>売り場レイアウト設計（試作）｜sal-u-bre</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ef;--surface:#fff;--surface2:#f0ede8;--border:#ddd9d2;
+  --text:#1a1816;--text2:#6b6560;--text3:#9e9990;
+  --accent:#1a5c8a;--accent-light:#e8f2f9;--accent-dark:#0f3d5e;
+  --danger:#c0392b;--danger-light:#fdf0ef;
+  --success:#1a7a4a;--warn:#b5600a;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#17140f;--surface:#231f19;--surface2:#2d281f;--border:#3b352b;
+    --text:#f0ece4;--text2:#b7b0a4;--text3:#877f72;
+    --accent:#5aa9dc;--accent-light:#1e3346;--accent-dark:#0c2c44;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px}
+.app{max-width:960px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+
+/* ── ヘッダー ── */
+.navbar{background:var(--accent-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.navbar h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.navbar .beta{font-size:9px;background:rgba(255,255,255,.2);border-radius:4px;padding:2px 5px;font-family:'DM Mono',monospace}
+.name-input{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:12px;padding:6px 10px;width:130px;font-family:'Noto Sans JP',sans-serif;outline:none}
+.name-input::placeholder{color:rgba(255,255,255,.55)}
+
+/* ── ツールバー ── */
+.toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.step{display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:2px}
+.step label{font-size:10px;color:var(--text2);padding:0 4px}
+.step button{width:26px;height:26px;border:none;background:var(--surface);border-radius:6px;font-size:16px;font-weight:700;color:var(--accent);cursor:pointer;line-height:1}
+.step button:active{background:var(--accent-light)}
+.step .val{min-width:20px;text-align:center;font-family:'DM Mono',monospace;font-weight:700;font-size:13px}
+.tb-spacer{flex:1}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;height:30px;padding:0 10px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.icon-btn:active{background:var(--border)}
+.icon-btn.danger{color:var(--danger);border-color:var(--danger)}
+
+/* ── 集計バー ── */
+.stats{display:flex;gap:14px;align-items:center;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.stat{font-size:12px;color:var(--text2)}
+.stat b{font-family:'DM Mono',monospace;font-size:15px;color:var(--text);font-weight:700}
+.stat .full{color:var(--danger)}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.legend .lg{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text2)}
+.legend .sw{width:10px;height:10px;border-radius:3px;border:1px solid rgba(0,0,0,.12)}
+
+/* ── ボード ── */
+.hint{font-size:11px;color:var(--text3);padding:6px 16px 0;line-height:1.4;flex-shrink:0}
+#legend-prod{display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;max-height:24vh;padding:2px 12px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.lgp{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;user-select:none;padding:6px 2px;border-bottom:1px solid var(--surface2)}
+.lgp:last-child{border-bottom:none}
+.lgp.off{opacity:.45}
+.lgp.off i{border-style:dashed}
+.lgp i{width:15px;height:15px;border-radius:4px;border:2.5px solid;background:transparent;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:900;line-height:1}
+.board-wrap{flex:1;min-height:0;overflow:hidden;padding:10px 12px;display:flex;flex-direction:column}
+.board{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px}
+.shelf{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;border-bottom:1px solid var(--border);padding-bottom:2px}
+.shelf.t-ensui{flex:1;max-height:130px}
+.shelf.t-bou{flex:2.4;max-height:320px;border-left:3px solid var(--accent);padding-left:3px}
+.snum{position:absolute;top:-1px;left:1px;font-size:8px;color:var(--text3);font-family:'DM Mono',monospace;z-index:1;pointer-events:none;background:var(--bg);padding:0 2px;border-radius:3px;opacity:.7}
+.rtype{position:absolute;top:-2px;right:2px;z-index:2;font-size:8px;font-weight:700;border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:4px;padding:1px 6px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;line-height:1.4}
+.shelf.t-bou .rtype{color:var(--accent);border-color:var(--accent)}
+.row{flex:1;min-height:0;display:grid;gap:0;position:relative}
+.grp-label{position:absolute;top:0;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;padding:0 2px;box-sizing:border-box;z-index:3}
+.grp-label span{background:rgba(18,18,18,.74);color:#fff;border-radius:5px;padding:1px 6px;font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 整理モード：掴んだ商品の強調＋プレビュー透過 */
+.organizing .hook.filled{transition:opacity .12s}
+.hook.picked{outline:3px solid #fff!important;outline-offset:-1px;box-shadow:0 0 0 2px var(--accent),0 0 10px 2px rgba(255,255,255,.5)!important;z-index:4;animation:pickpulse 1s ease-in-out infinite}
+.card3d.picked{outline:3px solid #fff!important;box-shadow:0 0 10px 3px rgba(255,255,255,.6)!important}
+@keyframes pickpulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+body.organizing #board{opacity:.92}
+/* 商品メニュー */
+#prod-menu{display:none;position:fixed;z-index:75;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 26px rgba(0,0,0,.3);padding:6px;min-width:150px;font-family:'Noto Sans JP',sans-serif}
+#prod-menu-name{font-size:11px;color:var(--text2);padding:4px 10px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+#prod-menu button{display:block;width:100%;text-align:left;padding:9px 12px;border:none;background:none;font-size:14px;color:var(--text);cursor:pointer;border-radius:7px;font-family:'Noto Sans JP',sans-serif}
+#prod-menu button:hover{background:var(--surface2)}
+#prod-menu .pm-del{color:var(--danger)}
+#prod-menu .pm-close{color:var(--text3);font-size:12px;padding:6px 12px}
+.hook{height:100%;min-height:0;border-radius:2px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;user-select:none;transition:transform .06s}
+.hook:active{transform:scale(.94)}
+.hook.empty{background:var(--surface);border:2px dashed var(--border);color:var(--text3)}
+.hook.empty::before{content:'＋';font-size:18px;opacity:.5}
+.hook.filled{border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.hk-prod{font-size:9px;font-weight:700;line-height:1;opacity:.85;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
+.hk-buoy{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;line-height:1.15;margin-top:1px}
+.hk-qty{font-size:9px;font-family:'DM Mono',monospace;opacity:.8;line-height:1;margin-top:1px}
+.hook .peg{position:absolute;top:3px;left:50%;transform:translateX(-50%);width:14px;height:4px;border-radius:2px;background:rgba(0,0,0,.18)}
+/* 密度別：フックが小さいときは文字を間引く */
+#board.lvl1 .hk-prod,#board.lvl1 .hk-qty{display:none}
+#board.lvl1 .hk-buoy{font-size:11px}
+#board.lvl1 .hook .peg,#board.lvl2 .hook .peg{display:none}
+#board.lvl1 .hook.empty::before{font-size:12px}
+#board.lvl2 .hk-prod,#board.lvl2 .hk-qty{display:none}
+#board.lvl2 .hk-buoy{font-size:8px}
+#board.lvl2 .hook{border-radius:5px}
+#board.lvl2 .hook.empty{border-width:1px}
+#board.lvl2 .hook.empty::before{font-size:0}
+
+/* ── パレット ── */
+.palette{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.08);padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+.pal-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pal-row:last-child{margin-bottom:0}
+.mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.mode-toggle button{border:none;background:none;padding:7px 12px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.mode-toggle button.on{background:var(--accent);color:#fff}
+.mode-toggle button.on.erase{background:var(--danger)}
+.sel{flex:1;min-width:0;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:13px;padding:0 8px;font-family:'Noto Sans JP',sans-serif;outline:none}
+.swatches{display:flex;gap:7px;overflow-x:auto;padding:2px 0;flex:1}
+.sw-btn{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;position:relative}
+.sw-btn.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0;flex:1}
+.chip{flex-shrink:0;height:30px;padding:0 12px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;white-space:nowrap}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.qty-step{display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:2px}
+.qty-step button{width:28px;height:28px;border:none;background:var(--surface);border-radius:6px;font-size:16px;font-weight:700;color:var(--accent);cursor:pointer}
+.qty-step .val{min-width:22px;text-align:center;font-family:'DM Mono',monospace;font-weight:700}
+.brush-prev{display:flex;align-items:center;gap:8px;margin-left:auto}
+.brush-prev .lbl{font-size:10px;color:var(--text3)}
+.brush-tile{width:42px;height:48px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,.14)}
+.brush-tile .b{font-size:13px;font-weight:700;font-family:'DM Mono',monospace}
+.brush-tile .q{font-size:9px;font-family:'DM Mono',monospace;opacity:.8}
+.pal-label{font-size:10px;color:var(--text3);width:34px;flex-shrink:0}
+
+/* ── 3Dプレビュー ── */
+#stage3d{display:none;flex:1;min-height:0;position:relative;overflow:hidden;perspective:1000px;perspective-origin:50% 42%;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 38%,var(--surface),var(--bg) 82%)}
+#stage3d *{-webkit-user-drag:none;user-select:none}
+#stage3d.on{display:flex}
+#scene3d{transform-style:preserve-3d;will-change:transform}
+#pegboard{transform-style:preserve-3d;display:flex;flex-direction:column;gap:7px;padding:16px;border-radius:6px;border:2px solid #cfcabf;background:#e4e0d7;background-image:radial-gradient(circle,rgba(0,0,0,.13) 1.1px,transparent 1.5px);background-size:12px 12px;box-shadow:0 40px 70px rgba(0,0,0,.4),inset 0 0 0 3px rgba(255,255,255,.35)}
+@media (prefers-color-scheme:dark){#pegboard{background:#3a352b;background-image:radial-gradient(circle,rgba(0,0,0,.45) 1.1px,transparent 1.5px);border-color:#4a4436}}
+.r3d{display:grid;position:relative;transform-style:preserve-3d}
+.grp-label3d{position:absolute;top:0;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;padding:0 2px;box-sizing:border-box;transform:translateZ(42px)}
+.grp-label3d span{background:rgba(15,15,15,.5);color:#fff;border-radius:4px;padding:0 5px;font-size:9px;font-weight:700;font-family:'Noto Sans JP',sans-serif;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px #000}
+.c3d{position:relative;transform-style:preserve-3d;display:flex;align-items:flex-start;justify-content:center;height:100%}
+.peg3d{position:absolute;top:2px;left:50%;width:3px;height:12px;background:linear-gradient(#ddd,#888);transform:translateX(-50%) translateZ(20px);border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.5)}
+.card3d{position:relative;width:100%;transform:translateZ(34px);box-shadow:-2px 3px 0 rgba(0,0,0,.25),-4px 6px 0 rgba(0,0,0,.15),-12px 16px 20px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:700;overflow:hidden;border-radius:2px;line-height:1.02;padding:1px 2px;cursor:pointer}
+.card3d::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,0) 42%,rgba(0,0,0,.22))}
+.c3d-p{font-size:6px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92;font-family:'Noto Sans JP',sans-serif}
+.c3d-b{font-size:9px;font-weight:700}
+#hint3d{display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:4px 12px;z-index:5;white-space:nowrap}
+#hint3d b{color:var(--accent);cursor:pointer}
+.icon-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* ── 自動配置モーダル ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.sheet{background:var(--surface);border:1px solid var(--border);border-radius:14px;max-width:460px;width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+.sheet h3{margin:0;padding:14px 16px;border-bottom:1px solid var(--border);font-size:15px}
+.sheet .body{padding:12px 16px;overflow:auto}
+.sheet .foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+.pchk{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;border-bottom:1px solid var(--surface2);cursor:pointer}
+.pchk .tb{font-size:9px;padding:1px 6px;border-radius:8px;background:var(--surface2);color:var(--text2);flex-shrink:0}
+.pchk .tb.bo{color:var(--accent);border:1px solid var(--accent)}
+.opt{font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+.opt label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.ap-row{display:flex;align-items:center;gap:6px;padding:9px 10px;border-bottom:1px solid var(--surface2);cursor:pointer;font-size:13px;color:var(--text)}
+.ap-row:active{background:var(--surface2)}
+.ap-row.added{opacity:.6}
+.apl{display:block;font-size:12px;color:var(--text2);margin:10px 0 3px;font-weight:700}
+.api{width:100%;height:38px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:14px;padding:0 10px;box-sizing:border-box;font-family:'Noto Sans JP',sans-serif;outline:none}
+#ap-colors{display:flex;flex-wrap:wrap;gap:6px}
+.apc{display:inline-flex;align-items:center;gap:5px;font-size:12px;border:1px solid var(--border);border-radius:16px;padding:4px 10px 4px 7px;cursor:pointer;user-select:none}
+.apc input{display:none}
+.apc i{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.15);display:inline-block;position:relative}
+.apc.on{border-color:var(--accent);background:var(--accent-light)}
+.apc.on i::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:900;text-shadow:0 0 2px rgba(0,0,0,.6)}
+.toast{position:fixed;bottom:calc(50% );left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);border-radius:20px;padding:9px 18px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;z-index:50}
+.toast.show{opacity:.95}
+
+/* ── 印刷 ── */
+@media print{
+  html,body{height:auto;overflow:visible}
+  .app{height:auto;overflow:visible}
+  .toolbar,.palette,.hint,.navbar .beta,.name-input{display:none!important}
+  .navbar{background:none;color:#000;border-bottom:2px solid #000}
+  .navbar h1{color:#000}
+  .navbar::after{content:'　'attr(data-plan);font-weight:700}
+  body{background:#fff}
+  .board-wrap{overflow:visible}
+  .hook.empty{border-color:#ccc}
+  .hook.filled{box-shadow:none;border:1px solid #999}
+  .stats{border:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="navbar" id="navbar">
+    <h1>売り場レイアウト</h1><span class="beta">試作</span>
+    <input class="name-input" id="plan-name" placeholder="店舗・売り場名（例: ○○釣具）" oninput="save()">
+  </div>
+
+  <div class="toolbar">
+    <select class="sel" id="sel-bay" style="max-width:130px;height:30px;flex:0 1 auto" onchange="switchBay(this.value)"></select>
+    <button class="icon-btn" onclick="addBay()">＋棚</button>
+    <button class="icon-btn" onclick="renameBay()">✎ 名前</button>
+    <button class="icon-btn danger" onclick="deleteBay()">🗑 棚削除</button>
+    <div class="step"><label>段</label><button onclick="chRows(-1)">−</button><span class="val" id="v-rows">14</span><button onclick="chRows(1)">＋</button></div>
+    <div class="step"><label>横</label><button onclick="chCols(-1)">−</button><span class="val" id="v-cols">20</span><button onclick="chCols(1)">＋</button></div>
+    <button class="icon-btn" onclick="document.getElementById('csv-file').click()">📥 商品CSV</button>
+    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(this)">
+    <button class="icon-btn" onclick="openAddProd()">＋ 商品追加</button>
+    <button class="icon-btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="openAutoModal()">✨ 自動配置</button>
+    <div class="tb-spacer"></div>
+    <button class="icon-btn" id="btn3d" onclick="toggle3d()">🧊 3D</button>
+    <button class="icon-btn" onclick="window.print()">🖨 印刷</button>
+    <button class="icon-btn danger" onclick="clearAll()">🧹 配置クリア</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">使用 <b id="s-used">0</b> / <b id="s-total">24</b> フック</div>
+    <div class="stat">残り <b id="s-left" class="">24</b></div>
+    <div class="stat">必要 <b id="s-req">0</b></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="hint" id="board-hint">パレットで内容を選び、フックをタップして配置（連続タップ可）。消しゴムで削除。段・横はヘッダーの ＋/− で調整。</div>
+
+  <div id="legend-prod"></div>
+  <div class="board-wrap">
+    <div id="board"></div>
+    <div id="stage3d">
+      <div id="scene3d"><div id="pegboard"></div></div>
+      <div id="hint3d"><b id="btn3d-move" onclick="toggle3dMove()" style="cursor:pointer">🔀 並べ替え</b>　｜　ドラッグで回転　<b onclick="reset3d()">⟲ 正面</b></div>
+    </div>
+  </div>
+
+  <!-- パレット -->
+  <div class="palette">
+    <div class="pal-row">
+      <div class="mode-toggle">
+        <button id="m-place" class="on" onclick="setMode('place')">配置</button>
+        <button id="m-erase" onclick="setMode('erase')">消しゴム</button>
+        <button id="m-move" onclick="setMode('move')">並べ替え</button>
+      </div>
+      <select class="sel" id="sel-prod" onchange="onProdChange()"></select>
+      <div class="qty-step"><button onclick="chQty(-1)">−</button><span class="val" id="v-qty">3</span><button onclick="chQty(1)">＋</button></div>
+    </div>
+    <div class="pal-row">
+      <span class="pal-label">カラー</span>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="pal-row">
+      <span class="pal-label">浮力</span>
+      <div class="chips" id="buoys"></div>
+      <div class="brush-prev">
+        <span class="lbl">ブラシ</span>
+        <div class="brush-tile" id="brush-tile"><span class="b">–</span><span class="q"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="ov" id="auto-ov">
+  <div class="sheet">
+    <h3>✨ 自動配置</h3>
+    <div class="body">
+      <div id="auto-note" style="display:none;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;color:var(--text2)"></div>
+      <div class="opt">
+        <span>カラーの並べ方：</span>
+        <label><input type="radio" name="autocol" value="split" checked> カラー別（オレンジ→イエロー→他）</label>
+        <label><input type="radio" name="autocol" value="mix"> 混在（浮力ごと1フック）</label>
+      </div>
+      <div class="opt">
+        <span>詰め方：</span>
+        <label><input type="radio" name="autopack" value="keep" checked> 商品ごとに区切る（右側に空きが出ることあり）</label>
+        <label><input type="radio" name="autopack" value="tight"> ぴっちり詰める（空きを埋める）</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="icon-btn" onclick="autoSelectAll(true)">全選択</button>
+        <button class="icon-btn" onclick="autoSelectAll(false)">全解除</button>
+        <span style="font-size:11px;color:var(--text3);align-self:center">配置する商品を選択</span>
+      </div>
+      <div id="auto-list"></div>
+    </div>
+    <div class="foot">
+      <button class="icon-btn" style="flex:1" onclick="closeAuto()">キャンセル</button>
+      <button class="icon-btn" style="flex:2;background:var(--accent);color:#fff;border-color:var(--accent)" onclick="runAutoArrange()">この内容で棚に配置</button>
+    </div>
+  </div>
+</div>
+<div class="ov" id="addprod-ov">
+  <div class="sheet">
+    <h3>＋ 商品を棚に追加</h3>
+    <div class="body">
+      <input id="ap-search" class="api" placeholder="🔍 商品名・カテゴリで検索（営業アプリの商品）" oninput="renderAddList()">
+      <div id="ap-list" style="max-height:44vh;overflow:auto;margin-top:8px;border:1px solid var(--border);border-radius:8px"></div>
+      <div style="text-align:center;margin-top:10px"><button class="icon-btn" id="ap-new-btn" onclick="apNewToggle()">＋ カタログに無い商品を新規作成</button></div>
+      <div id="ap-newform" style="display:none;margin-top:6px">
+        <label class="apl">商品名</label>
+        <input id="ap-name" class="api" placeholder="例：アズール フカセ M">
+        <label class="apl">種別</label>
+        <div class="opt">
+          <label><input type="radio" name="aptype" value="円錐" checked> 円錐ウキ</label>
+          <label><input type="radio" name="aptype" value="棒"> 棒ウキ</label>
+        </div>
+        <label class="apl">カラー（陳列する色を選択）</label>
+        <div id="ap-colors"></div>
+        <label class="apl">浮力（カンマ／スペース区切り）</label>
+        <input id="ap-buoys" class="api" placeholder="-00,000,00,U/0,0,G5,G2,B,2B,3B">
+        <div style="text-align:right;margin-top:8px"><button class="icon-btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="submitAddProd()">この内容で追加</button></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="icon-btn" style="flex:1" onclick="closeAddProd()">閉じる</button>
+    </div>
+  </div>
+</div>
+<div id="prod-menu">
+  <div id="prod-menu-name"></div>
+  <button onclick="pmMove()" class="pm-move">🔀 移動する</button>
+  <button onclick="pmDelete()" class="pm-del">🗑 削除する</button>
+  <button onclick="closeProdMenu()" class="pm-close">✕ 閉じる</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── サンプルマスタ（後で実データに差し替え可） ── */
+// 既定サンプル（営業アプリのCSVを取り込むと上書きされる）
+let PRODUCTS=[
+  {name:'桜匠グレ', type:'棒',  buoys:['-00','000','00','U/0','0','G5','G2','B'], colors:['オレンジ','イエロー']},
+  {name:'桜匠 S',   type:'棒',  buoys:['-00','000','00','U/0','0','G5','G2','B','3B','5B'], colors:['オレンジ','イエロー']},
+  {name:'PFトーナメント M', type:'円錐', buoys:['-00','000','00','U/0','0','G5','G2','B','2B','3B'], colors:['オレンジ','イエロー']},
+  {name:'PFフカセ 遠投', type:'円錐', buoys:['-00','000','00','G5','G2','B','3B','5B','1.0'], colors:['オレンジ','イエロー']},
+];
+// カラー定義（営業アプリ COLORS_DB と一致）
+let COLORS=[
+  {name:'イエロー',hex:'#f5d020'},{name:'マスカットイエロー',hex:'#bcd62e'},{name:'オレンジ',hex:'#f07830'},
+  {name:'ブライトオレンジ',hex:'#e84800'},{name:'レッド',hex:'#d94040'},{name:'ピンク',hex:'#e878a8'},
+  {name:'ホワイト',hex:'#e8e8e8'},{name:'グリーン',hex:'#40b060'},{name:'ブルー',hex:'#3878d8'},
+  {name:'パープル',hex:'#9060c8'},{name:'ブラック',hex:'#303030'},{name:'ゴールド',hex:'#c8a820'},
+  {name:'シルバー',hex:'#a0a8b0'},{name:'クリア',hex:'#c0dcec'},{name:'イエロー/オレンジ',hex:'#f5d020'},
+];
+const FALLBACK_HEX=['#e57373','#f06292','#ba68c8','#9575cd','#7986cb','#64b5f6','#4dd0e1','#4db6ac','#81c784','#dce775','#ffd54f','#ffb74d','#a1887f','#90a4ae'];
+function autoHex(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))&0xffff;return FALLBACK_HEX[h%FALLBACK_HEX.length];}
+
+const DEF_ROWS=14, DEF_COLS=20;
+let state={
+  store:'', cur:0,
+  bays:[{name:'棚A', rows:DEF_ROWS, cols:DEF_COLS, hooks:{}}],
+  brush:{prod:PRODUCTS[0].name, color:COLORS[0].name, buoy:PRODUCTS[0].buoys[0], qty:3},
+  mode:'place'
+};
+function bay(){return state.bays[state.cur];}
+const LS='salubre_shelf_planner_v1';
+const LSM='salubre_shelf_master_v1';
+let _is3d=false,_rx=12,_ry=-32,_scale3d=1,_drag3d=null;
+let PLACEMENT=null;  // 数量付きCSV（陳列イメージ）を取り込んだときの正確な陳列リスト
+let lastAuto=null;   // 直近の自動配置の条件（段/列変更時に自動で再編するため）
+let _reqHooks=null;  // 必要フック数（棚に収まらない分も含む合計）
+let _menuProd=null;  // 商品メニュー対象
+let _picked=null;    // 移動中の商品名
+let _pickOrder=null; // 移動開始時の並び順（キャンセル復帰用）
+let _previewOrder=null;
+let _lastQ=null;     // 直近プレビュー対象
+let _pd=null;        // ポインタ操作の候補（タップ/ドラッグ判定）
+
+/* ── 商品マスタ（CSV取込・保存） ── */
+function saveMaster(){try{localStorage.setItem(LSM,JSON.stringify({products:PRODUCTS,colors:COLORS}));}catch(e){}}
+function loadMaster(){try{const d=JSON.parse(localStorage.getItem(LSM));if(d){if(d.products&&d.products.length)PRODUCTS=d.products;if(d.colors&&d.colors.length)COLORS=d.colors;}}catch(e){}loadSalesCatalog();}
+// 営業アプリが保存した商品カタログを取り込んでマスタへ統合（同一端末のlocalStorage経由）
+function loadSalesCatalog(){
+  let cat;try{cat=JSON.parse(localStorage.getItem('salubre_catalog_v1')||'null');}catch(e){}
+  if(!Array.isArray(cat)||!cat.length)return;
+  cat.forEach(c=>{
+    if(!c||!c.name)return;
+    const type=/棒/.test(c.cat||'')?'棒':(/円錐/.test(c.cat||'')?'円錐':'円錐');
+    const colors=(c.colors||[]).slice();
+    const buoys=(c.sizes||[]).slice();
+    const ex=PRODUCTS.find(p=>p.name===c.name);
+    if(ex){ if(!ex.colors||!ex.colors.length)ex.colors=colors; if(!ex.buoys||!ex.buoys.length)ex.buoys=buoys; if(!ex.type)ex.type=type; }
+    else PRODUCTS.push({name:c.name,type,colors,buoys,cat:c.cat||''});
+  });
+}
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else{ if(ch==='"')q=true; else if(ch===','){row.push(cur);cur='';} else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur='';} else if(ch!=='\r')cur+=ch; }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+function importCSV(input){
+  const file=input.files&&input.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{applyMasterFromCSV(rd.result);}catch(e){toast('CSVの読み込みに失敗しました');}input.value='';};
+  rd.readAsText(file,'utf-8');
+}
+function applyMasterFromCSV(text){
+  const rows=parseCSV(text).filter(r=>r.some(c=>String(c).trim()!==''));
+  let hi=-1,idx={};
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i].map(c=>String(c).trim());
+    const col=(names)=>r.findIndex(c=>names.includes(c));
+    const iName=col(['商品名','品名']),iColor=col(['カラー','色']),iBuoy=col(['浮力','浮力(数量)','サイズ']);
+    if(iName>=0&&iColor>=0&&iBuoy>=0){hi=i;idx={name:iName,color:iColor,buoy:iBuoy,cat:col(['カテゴリ','区分','分類']),qty:col(['数量','個数','在庫数'])};break;}
+  }
+  if(hi<0){toast('商品名・カラー・浮力の列が見つかりません');return;}
+  const map={},colorSet=new Set(),placement=[],pseen=new Set();
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i].map(c=>String(c).trim());
+    const name=r[idx.name];if(!name||name.startsWith('■')||name.startsWith('（'))continue;
+    const color=r[idx.color]||'';
+    let buoy=(r[idx.buoy]||'').replace(/[\(（].*$/,'').trim();
+    const cat=idx.cat>=0?(r[idx.cat]||''):'';
+    if(!map[name])map[name]={name,type:'円錐',colors:[],buoys:[]};
+    if(/棒/.test(cat))map[name].type='棒';else if(/円錐/.test(cat))map[name].type='円錐';
+    if(color&&!map[name].colors.includes(color))map[name].colors.push(color);
+    if(buoy&&!map[name].buoys.includes(buoy))map[name].buoys.push(buoy);
+    if(color)colorSet.add(color);
+    // 数量列があれば「陳列リスト」も作る（qty>0 の実在フックのみ）
+    if(idx.qty>=0&&color&&buoy){const qn=parseInt(r[idx.qty]);if(!isNaN(qn)&&qn>0){const k=name+'|'+color+'|'+buoy;if(!pseen.has(k)){pseen.add(k);placement.push({prod:name,color,buoy});}}}
+  }
+  const prods=Object.values(map).filter(p=>p.buoys.length||p.colors.length);
+  if(!prods.length){toast('商品データが見つかりませんでした');return;}
+  colorSet.forEach(cn=>{if(!COLORS.some(c=>c.name===cn))COLORS.push({name:cn,hex:autoHex(cn)});});
+  PRODUCTS=prods;
+  PLACEMENT=(idx.qty>=0&&placement.length)?placement:null;
+  lastAuto=null;
+  const p0=PRODUCTS[0];
+  state.brush.prod=p0.name;state.brush.buoy=p0.buoys[0]||'';
+  if(p0.colors.length&&!p0.colors.includes(state.brush.color))state.brush.color=p0.colors[0];
+  saveMaster();renderPalette();renderBoard();
+  toast(PLACEMENT?('✓ 陳列リスト取込（'+PLACEMENT.length+'フック）→「✨自動配置」で棚に並びます'):('✓ '+PRODUCTS.length+'商品を登録しました'));
+}
+
+function textOn(hex){const c=hex.replace('#','');const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>155?'#1a1a1a':'#fff';}
+function colorHex(name){const c=COLORS.find(x=>x.name===name);return c?c.hex:'#aaa';}
+// フック背景：混在は複数カラーのツートン（2色=対角/3色=横帯）
+function hookBg(h){
+  if(h.mixed&&h.mixColors&&h.mixColors.length>=2){
+    const cs=h.mixColors.map(colorHex);
+    const bg=cs.length>=3
+      ?('linear-gradient('+cs[0]+' 0 33.3%,'+cs[1]+' 33.3% 66.6%,'+cs[2]+' 66.6% 100%)')
+      :('linear-gradient(135deg,'+cs[0]+' 0 50%,'+cs[1]+' 50% 100%)');
+    return {bg:bg,fg:textOn(cs[0])};
+  }
+  const hx=colorHex(h.color);return {bg:hx,fg:textOn(hx)};
+}
+// 商品ごとの識別色（枠線用）※カラー(中身)とは別
+const GROUP_COLORS=['#e6194B','#4363d8','#3cb44b','#911eb4','#42d4f4','#f032e6','#469990','#9A6324','#000075','#808000','#f58231','#a9a9a9','#800000','#008080'];
+function productGroupColor(name){let i=PRODUCTS.findIndex(p=>p.name===name);if(i<0){let h=0;for(let k=0;k<name.length;k++)h=(h*31+name.charCodeAt(k))&0xffff;i=h;}return GROUP_COLORS[i%GROUP_COLORS.length];}
+// 同じ商品の“かたまり”の外周だけ太線で囲う（内側は細い区切り線）
+function groupBorderCSS(B,r,c){
+  const h=B.hooks[r+'_'+c];if(!h)return '';
+  const g=productGroupColor(h.prod);
+  const same=(rr,cc)=>{if(rr<0||cc<0||rr>=B.rows||cc>=B.cols)return false;const x=B.hooks[rr+'_'+cc];return x&&x.prod===h.prod;};
+  const sd=on=>on?('4px solid '+g):'1px solid rgba(0,0,0,.16)';
+  return 'box-sizing:border-box;border-top:'+sd(!same(r-1,c))+';border-bottom:'+sd(!same(r+1,c))+';border-left:'+sd(!same(r,c-1))+';border-right:'+sd(!same(r,c+1))+';';
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600);}
+
+function save(){
+  state.store=document.getElementById('plan-name').value;
+  try{localStorage.setItem(LS,JSON.stringify({store:state.store,cur:state.cur,bays:state.bays,brush:state.brush}));}catch(e){}
+}
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(LS));if(!d)return;
+    if(d.bays&&d.bays.length){state.store=d.store||'';state.bays=d.bays;state.cur=Math.min(d.cur||0,d.bays.length-1);}
+    else if(d.rows!==undefined){ // 旧形式（単一レイアウト）→ 棚Aへ移行
+      state.store=d.name||''; state.bays=[{name:'棚A',rows:d.rows||DEF_ROWS,cols:d.cols||DEF_COLS,hooks:d.hooks||{}}]; state.cur=0;
+    }
+    if(d.brush)state.brush=d.brush;
+  }catch(e){}
+}
+
+/* ── パレット描画 ── */
+function renderPalette(){
+  const sp=document.getElementById('sel-prod');
+  sp.innerHTML=PRODUCTS.map(p=>`<option value="${p.name}"${p.name===state.brush.prod?' selected':''}>${p.name}（${p.type}）</option>`).join('');
+  const prod=PRODUCTS.find(p=>p.name===state.brush.prod)||PRODUCTS[0];
+  const sw=document.getElementById('swatches');
+  const palColors=(prod&&prod.colors&&prod.colors.length)?prod.colors.map(cn=>({name:cn,hex:colorHex(cn)})):COLORS;
+  sw.innerHTML=palColors.map(c=>`<button class="sw-btn${c.name===state.brush.color?' on':''}" style="background:${c.hex}" title="${c.name}" onclick="setColor('${c.name}')"></button>`).join('');
+  const bz=document.getElementById('buoys');
+  bz.innerHTML=prod.buoys.map(b=>`<button class="chip${b===state.brush.buoy?' on':''}" onclick="setBuoy('${b}')">${b}</button>`).join('');
+  document.getElementById('v-qty').textContent=state.brush.qty;
+  const hx=colorHex(state.brush.color);
+  const bt=document.getElementById('brush-tile');
+  bt.style.background=hx;bt.style.color=textOn(hx);
+  bt.innerHTML=`<span class="b">${state.brush.buoy||'–'}</span><span class="q">×${state.brush.qty}</span>`;
+  document.getElementById('m-place').classList.toggle('on',state.mode==='place');
+  const me=document.getElementById('m-erase');me.classList.toggle('on',state.mode==='erase');me.classList.toggle('erase',state.mode==='erase');
+  const mv=document.getElementById('m-move');if(mv)mv.classList.toggle('on',state.mode==='move');
+  const bd=document.getElementById('board');if(bd)bd.style.cursor=state.mode==='move'?'grab':'';
+  const hint=document.getElementById('board-hint');
+  if(hint)hint.textContent=state.mode==='move'?'整理：商品をタップ→「移動／削除」を選択。移動を選ぶと掴んだ状態になり、別商品にドラッグ／タップで位置換え（リアルタイムに組み替わります）。':'パレットで内容を選び、フックをタップして配置（連続タップ可）。消しゴムで削除。段・横はヘッダーの ＋/− で調整。';
+}
+
+/* ── ボード描画 ── */
+function renderBoard(){
+  const board=document.getElementById('board');const B=bay();ensureRowTypes(B);
+  let lvl=0;
+  if(B.cols>8)lvl=1;      // 系列・本数を隠す（浮力のみ）
+  if(B.cols>16)lvl=2;     // 文字なし・色タイルのみ
+  board.className='lvl'+lvl;
+  let html='';
+  for(let r=0;r<B.rows;r++){
+    const _t=B.rowTypes[r]||'円錐';
+    html+=`<div class="shelf ${_t==='棒'?'t-bou':'t-ensui'}"><span class="snum">段${r+1}</span><button class="rtype" onclick="event.stopPropagation();toggleRowType(${r})">${_t==='棒'?'棒ウキ':'円錐'}</button><div class="row" style="grid-template-columns:repeat(${B.cols},1fr)">`;
+    for(let c=0;c<B.cols;c++){
+      const k=r+'_'+c;const h=B.hooks[k];
+      if(h){
+        const bgc=hookBg(h);
+        html+=`<div class="hook filled${h.prod===_picked?' picked':''}" data-prod="${(h.prod||'').replace(/"/g,'')}" style="background:${bgc.bg};color:${bgc.fg};${groupBorderCSS(B,r,c)}" onclick="tap(${r},${c})"><span class="peg"></span><span class="hk-buoy">${h.buoy}</span></div>`;
+      }else{
+        html+=`<div class="hook empty" onclick="tap(${r},${c})"><span class="peg"></span></div>`;
+      }
+    }
+    html+=rowGroupLabels(B,r);   // 商品グループごとの名前ラベルを重ねる
+    html+='</div></div>';
+  }
+  board.innerHTML=html;
+  renderStats();
+  renderProductLegend();
+  if(_is3d)render3d();
+}
+// 各段の「同じ商品が連続する区間」ごとに、その上へ商品名ラベルを重ねる
+function rowGroupLabels(B,r){
+  let out='',c=0;
+  while(c<B.cols){
+    const h=B.hooks[r+'_'+c];
+    if(!h){c++;continue;}
+    let end=c;
+    while(end+1<B.cols){const n=B.hooks[r+'_'+(end+1)];if(n&&n.prod===h.prod)end++;else break;}
+    const len=end-c+1;
+    out+='<div class="grp-label" style="left:'+(c/B.cols*100)+'%;width:'+(len/B.cols*100)+'%"><span>'+h.prod+'</span></div>';
+    c=end+1;
+  }
+  return out;
+}
+function rowGroupLabels3d(B,r){
+  let out='',c=0;
+  while(c<B.cols){
+    const h=B.hooks[r+'_'+c];
+    if(!h){c++;continue;}
+    let end=c;while(end+1<B.cols){const n=B.hooks[r+'_'+(end+1)];if(n&&n.prod===h.prod)end++;else break;}
+    const len=end-c+1;
+    out+='<div class="grp-label3d" style="left:'+(c/B.cols*100)+'%;width:'+(len/B.cols*100)+'%"><span>'+h.prod+'</span></div>';
+    c=end+1;
+  }
+  return out;
+}
+function renderProductLegend(){
+  const el=document.getElementById('legend-prod');if(!el)return;
+  const B=bay();
+  const onBoard=currentProductOrder();
+  // 候補集合＝これまでの候補 ∪ 現在盤上の商品（削除しても候補に残す＝復活可能）
+  let cands=(B.candidates&&B.candidates.length)?B.candidates.slice():onBoard.slice();
+  onBoard.forEach(p=>{if(!cands.includes(p))cands.push(p);});
+  B.candidates=cands;
+  if(!cands.length){el.style.display='none';return;}
+  el.style.display='flex';
+  const active=new Set(onBoard);
+  el.innerHTML=cands.map(p=>{
+    const on=active.has(p);const gc=productGroupColor(p);const esc=p.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return '<label class="lgp'+(on?'':' off')+'" onclick="toggleProductOnShelf(\''+esc+'\')"><i style="border-color:'+gc+';background:'+(on?gc:'transparent')+'">'+(on?'✓':'')+'</i>'+p+'</label>';
+  }).join('');
+}
+function toggleProductOnShelf(name){
+  const B=bay();
+  const onBoard=currentProductOrder();
+  let order=(lastAuto&&lastAuto.names&&lastAuto.names.length)?lastAuto.names.slice():onBoard.slice();
+  onBoard.forEach(p=>{if(!order.includes(p))order.push(p);});
+  const byColor=lastAuto?lastAuto.byColor:true, tight=lastAuto?lastAuto.tight:false;
+  if(order.includes(name)){
+    order=order.filter(x=>x!==name);           // 棚から外す
+  }else{
+    const cands=B.candidates||[];const ci=cands.indexOf(name);   // 候補の並びを尊重して戻す
+    let at=order.length;
+    for(let i=0;i<order.length;i++){if(cands.indexOf(order[i])>ci){at=i;break;}}
+    order.splice(at,0,name);
+  }
+  lastAuto={names:order,byColor,tight};
+  arrangeInto(order,byColor,tight);
+  save();renderBoard();
+}
+/* セルを縦長（縦横比を逆）に：列幅を行高より少し狭くして中央寄せ */
+function adjustCellAspect(){
+  const B=bay();
+  const rows=document.querySelectorAll('#board .row');
+  if(!rows.length)return;
+  const refRow=document.querySelector('#board .shelf.t-ensui .row')||rows[0];
+  const cellH=refRow.clientHeight, availW=refRow.clientWidth;
+  if(!cellH||!availW)return;
+  let cellW=Math.min(cellH*0.72, availW/B.cols);   // 0.72=縦長比
+  cellW=Math.max(10,Math.floor(cellW));
+  rows.forEach(rw=>{rw.style.gridTemplateColumns='repeat('+B.cols+','+cellW+'px)';rw.style.justifyContent='center';});
+}
+
+/* ── 3Dプレビュー ── */
+function toggle3d(){
+  _is3d=!_is3d;
+  document.getElementById('board').style.display=_is3d?'none':'';
+  document.getElementById('stage3d').classList.toggle('on',_is3d);
+  document.getElementById('btn3d').classList.toggle('on',_is3d);
+  document.getElementById('hint3d').style.display=_is3d?'block':'none';
+  document.querySelector('.palette').style.display=_is3d?'none':'';
+  if(_is3d)render3d();
+}
+function reset3d(){_rx=12;_ry=-32;apply3d();}
+function toggle3dMove(){
+  if(state.mode==='move'){cancelMove();closeProdMenu();}
+  state.mode=(state.mode==='move')?'place':'move';
+  const b=document.getElementById('btn3d-move');
+  if(b){b.style.color=state.mode==='move'?'var(--danger)':'var(--accent)';b.textContent=state.mode==='move'?'🔀 並べ替え中（ドラッグで移動）':'🔀 並べ替え';}
+  document.getElementById('stage3d').style.cursor=state.mode==='move'?'grab':'';
+  toast(state.mode==='move'?'並べ替え：カードをドラッグして別商品に重ねると移動':'回転モードに戻りました');
+  renderPalette();
+}
+function apply3d(){const s=document.getElementById('scene3d');if(s)s.style.transform='rotateX('+_rx+'deg) rotateY('+_ry+'deg) scale('+_scale3d+')';}
+function fit3d(){
+  const stage=document.getElementById('stage3d'),pb=document.getElementById('pegboard');
+  if(!pb.offsetWidth||!stage.clientWidth)return;
+  const k=Math.min((stage.clientWidth*0.86)/pb.offsetWidth,(stage.clientHeight*0.80)/pb.offsetHeight,1.8);
+  _scale3d=k||1;apply3d();
+}
+function render3d(){
+  const B=bay();ensureRowTypes(B);
+  const CELL=34;
+  let html='';
+  for(let r=0;r<B.rows;r++){
+    const t=B.rowTypes[r]||'円錐';
+    const rh=t==='棒'?116:46;
+    html+='<div class="r3d" style="grid-template-columns:repeat('+B.cols+','+CELL+'px);height:'+rh+'px">';
+    for(let c=0;c<B.cols;c++){
+      const h=B.hooks[r+'_'+c];
+      if(h){
+        const bgc=hookBg(h);
+        const ch=Math.round((t==='棒'?rh*0.9:rh*0.82));
+        const info=(h.prod+' ・ '+(h.mixed?'混在':h.color)+' ・ 浮力'+h.buoy+' ・ ×'+h.qty).replace(/"/g,'');
+        html+='<div class="c3d"><span class="peg3d"></span><div class="card3d'+(h.prod===_picked?' picked':'')+'" data-prod="'+(h.prod||'').replace(/"/g,'')+'" data-info="'+info+'" title="'+info+'" style="height:'+ch+'px;background:'+bgc.bg+';color:'+bgc.fg+';'+groupBorderCSS(B,r,c)+'"><span class="c3d-b">'+h.buoy+'</span></div></div>';
+      }else{
+        html+='<div class="c3d"></div>';
+      }
+    }
+    html+=rowGroupLabels3d(B,r)+'</div>';
+  }
+  document.getElementById('pegboard').innerHTML=html;
+  fit3d();
+}
+
+function visibleHookKeys(B){return Object.keys(B.hooks).filter(k=>{const p=k.split('_');return (+p[0])<B.rows&&(+p[1])<B.cols;});}
+function renderStats(){
+  const B=bay();
+  const total=B.rows*B.cols;
+  const keys=visibleHookKeys(B);
+  const used=keys.length;
+  document.getElementById('s-used').textContent=used;
+  document.getElementById('s-total').textContent=total;
+  const left=document.getElementById('s-left');
+  left.textContent=total-used;left.classList.toggle('full',used>=total);
+  const req=(lastAuto&&_reqHooks!=null)?_reqHooks:used;   // 必要フック数（自動配置時は溢れ含む）
+  const rq=document.getElementById('s-req');
+  if(rq){rq.textContent=req+(req>total?'（'+(req-total)+'超）':'');rq.classList.toggle('full',req>total);}
+  // カラー構成
+  const byColor={};keys.forEach(k=>{const c=B.hooks[k].color;byColor[c]=(byColor[c]||0)+1;});
+  const lg=document.getElementById('legend');
+  lg.innerHTML=Object.keys(byColor).sort((a,b)=>byColor[b]-byColor[a]).map(c=>
+    `<span class="lg"><span class="sw" style="background:${colorHex(c)}"></span>${c} ${byColor[c]}</span>`).join('');
+}
+
+/* ── 操作 ── */
+function tap(r,c){
+  if(state.mode==='move')return;   // 並べ替えモードはドラッグで処理
+  const B=bay();ensureRowTypes(B);const k=r+'_'+c;
+  lastAuto=null;   // 手動で触ったら自動再編は止める（手編集を保持）
+  if(state.mode==='erase'){ if(B.hooks[k]){delete B.hooks[k];save();renderBoard();} return; }
+  if(!state.brush.prod||!state.brush.color||!state.brush.buoy){toast('系列・カラー・浮力を選んでください');return;}
+  const pt=(PRODUCTS.find(p=>p.name===state.brush.prod)||{}).type; // 棒 / 円錐
+  const rt=B.rowTypes[r]||'円錐';
+  if(pt&&pt!==rt){toast('この段は'+(rt==='棒'?'棒ウキ':'円錐')+'段です。'+(rt==='棒'?'棒ウキ':'円錐ウキ')+'系列を選ぶか、段タイプを切り替えてください');return;}
+  B.hooks[k]={prod:state.brush.prod,color:state.brush.color,buoy:state.brush.buoy,qty:state.brush.qty};
+  save();renderBoard();
+}
+function ensureRowTypes(B){
+  if(!Array.isArray(B.rowTypes))B.rowTypes=[];
+  while(B.rowTypes.length<B.rows)B.rowTypes.push('円錐');
+  if(B.rowTypes.length>B.rows)B.rowTypes.length=B.rows;
+}
+function toggleRowType(r){const B=bay();ensureRowTypes(B);B.rowTypes[r]=B.rowTypes[r]==='棒'?'円錐':'棒';save();renderBoard();}
+
+/* ── 自動配置（棚割りエンジン） ── */
+/* ── 商品を追加（営業アプリの商品を検索→選択、または新規作成） ── */
+function openAddProd(){
+  document.getElementById('ap-search').value='';
+  document.getElementById('ap-newform').style.display='none';
+  document.getElementById('ap-new-btn').style.display='';
+  renderAddColors();
+  renderAddList();
+  document.getElementById('addprod-ov').classList.add('on');
+}
+function renderAddList(){
+  const q=(document.getElementById('ap-search').value||'').trim();
+  const onBoard=new Set(currentProductOrder());
+  const list=PRODUCTS.filter(p=>!q||(p.name&&p.name.indexOf(q)>=0)||((p.cat||'').indexOf(q)>=0));
+  const el=document.getElementById('ap-list');
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">該当なし。下の「＋新規作成」で追加できます</div>';return;}
+  el.innerHTML=list.map(p=>{
+    const on=onBoard.has(p.name);
+    const sw=(p.colors||[]).slice(0,4).map(c=>'<span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:'+colorHex(c)+';border:1px solid rgba(0,0,0,.12)"></span>').join('');
+    return '<div class="ap-row'+(on?' added':'')+'" onclick="addCatalogProduct(\''+p.name.replace(/'/g,"\\'")+'\')"><span class="tb '+(p.type==='棒'?'bo':'')+'">'+(p.type||'円錐')+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.name+'</span><span style="display:flex;gap:2px">'+sw+'</span>'+(on?'<span style="color:var(--success);font-size:11px;font-weight:700;margin-left:4px">✓追加済</span>':'<span style="color:var(--accent);font-size:16px;font-weight:700;margin-left:4px">＋</span>')+'</div>';
+  }).join('');
+}
+function addCatalogProduct(name){
+  const B=bay();if(!B.candidates)B.candidates=[];if(!B.candidates.includes(name))B.candidates.push(name);
+  const p=PRODUCTS.find(x=>x.name===name);
+  if(p){state.brush.prod=name;state.brush.buoy=(p.buoys||[])[0]||'';if(p.colors&&p.colors.length&&!p.colors.includes(state.brush.color))state.brush.color=p.colors[0];}
+  const onBoard=currentProductOrder();
+  if(!onBoard.includes(name)){
+    let order=(lastAuto&&lastAuto.names&&lastAuto.names.length)?lastAuto.names.slice():onBoard.slice();
+    onBoard.forEach(x=>{if(!order.includes(x))order.push(x);});
+    if(!order.includes(name))order.push(name);
+    const byColor=lastAuto?lastAuto.byColor:true, tight=lastAuto?lastAuto.tight:false;
+    lastAuto={names:order,byColor,tight};
+    arrangeInto(order,byColor,tight);
+  }
+  save();saveMaster();renderPalette();renderBoard();renderAddList();
+  toast('✓ '+name+' を棚に追加');
+}
+function apNewToggle(){
+  const f=document.getElementById('ap-newform');
+  const show=f.style.display==='none';
+  f.style.display=show?'block':'none';
+  if(show){document.getElementById('ap-name').value='';document.getElementById('ap-buoys').value='-00,000,00,U/0,0,G5,G2,B,2B,3B';renderAddColors();}
+}
+function renderAddColors(){
+  const cont=document.getElementById('ap-colors');if(!cont)return;
+  cont.innerHTML=COLORS.map(c=>{
+    const on=(c.name==='オレンジ'||c.name==='イエロー');
+    return '<label class="apc'+(on?' on':'')+'" onclick="apToggle(this)"><input type="checkbox" class="ap-col" value="'+c.name.replace(/"/g,'&quot;')+'"'+(on?' checked':'')+'><i style="background:'+c.hex+'"></i>'+c.name+'</label>';
+  }).join('');
+}
+function apToggle(lbl){const cb=lbl.querySelector('input');setTimeout(()=>lbl.classList.toggle('on',cb.checked),0);}
+function closeAddProd(){document.getElementById('addprod-ov').classList.remove('on');}
+function submitAddProd(){
+  const name=document.getElementById('ap-name').value.trim();
+  if(!name){toast('商品名を入力してください');return;}
+  const type=((document.querySelector('input[name=aptype]:checked')||{}).value)||'円錐';
+  const colors=[...document.querySelectorAll('.ap-col:checked')].map(c=>c.value);
+  if(!colors.length){toast('カラーを1つ以上選んでください');return;}
+  const buoys=document.getElementById('ap-buoys').value.split(/[,、\s]+/).map(s=>s.trim()).filter(Boolean);
+  if(!buoys.length){toast('浮力を入力してください');return;}
+  const ex=PRODUCTS.find(p=>p.name===name);
+  if(ex){ex.type=type;ex.colors=colors;ex.buoys=buoys;}
+  else PRODUCTS.push({name,type,colors,buoys});
+  saveMaster();
+  addCatalogProduct(name);                         // 棚へ配置＋一覧更新
+  document.getElementById('ap-newform').style.display='none';
+}
+function openAutoModal(){renderAutoList();renderAutoNote();document.getElementById('auto-ov').classList.add('on');}
+function closeAuto(){document.getElementById('auto-ov').classList.remove('on');}
+function renderAutoList(){
+  const item=p=>'<label class="pchk"><input type="checkbox" class="auto-p" value="'+p.name.replace(/"/g,'')+'" checked><span class="tb '+(p.type==='棒'?'bo':'')+'">'+p.type+'</span>'+p.name+'</label>';
+  const bou=PRODUCTS.filter(p=>p.type==='棒'),en=PRODUCTS.filter(p=>p.type!=='棒');
+  document.getElementById('auto-list').innerHTML=
+    (bou.length?'<div style="font-size:11px;color:var(--text3);margin:4px 0 2px">棒ウキ</div>'+bou.map(item).join(''):'')+
+    (en.length?'<div style="font-size:11px;color:var(--text3);margin:10px 0 2px">円錐ウキ</div>'+en.map(item).join(''):'');
+}
+function autoSelectAll(v){document.querySelectorAll('.auto-p').forEach(c=>c.checked=v);}
+function colorRank(n){if(/オレンジ/.test(n))return 0;if(/イエロー/.test(n))return 1;return 2;}
+// 1商品の配置単位（{buoy,color}）を返す：陳列リスト取込時はその実在フックのみ、無ければ全カラー×浮力
+function unitsForProduct(P,byColor){
+  const bi=b=>{const i=(P.buoys||[]).indexOf(b);return i<0?999:i;};
+  if(PLACEMENT){
+    let items=PLACEMENT.filter(u=>u.prod===P.name).map(u=>({buoy:u.buoy,color:u.color}));
+    items.sort((a,b)=>bi(a.buoy)-bi(b.buoy)||colorRank(a.color)-colorRank(b.color));
+    if(!byColor){ // 混在：浮力ごとに1フックへ集約（そのフックは複数カラーのツートン表示）
+      const seen=new Set(),out=[];
+      items.forEach(u=>{if(!seen.has(u.buoy)){seen.add(u.buoy);out.push({buoy:u.buoy,color:u.color,mixed:true});}});
+      return out;
+    }
+    return items;
+  }
+  if(byColor){
+    const colors=[...(P.colors||[])].sort((a,b)=>colorRank(a)-colorRank(b));
+    const cl=colors.length?colors:[''];
+    const units=[];
+    (P.buoys||[]).forEach(buoy=>cl.forEach(col=>units.push({buoy,color:col})));
+    return units;
+  }
+  // 混在：浮力ごとに1フック（ツートン表示）
+  return (P.buoys||[]).map(buoy=>({buoy,color:(P.colors&&P.colors[0])||'',mixed:true}));
+}
+function clearPlacement(){PLACEMENT=null;toast('陳列リストを解除（全カラー×浮力で配置します）');renderAutoNote();}
+function renderAutoNote(){
+  const el=document.getElementById('auto-note');if(!el)return;
+  if(PLACEMENT){el.style.display='block';el.innerHTML='🗄 陳列リスト取込済み（'+PLACEMENT.length+'フック）。この内容で正確に配置します。 <b style="color:var(--danger);cursor:pointer" onclick="clearPlacement()">解除</b>';}
+  else{el.style.display='none';}
+}
+// 実配置エンジン（段/列に左詰めパッキング）。overflow数を返す
+function arrangeInto(names,byColor,tight){
+  const B=bay();
+  const sel=names.map(n=>PRODUCTS.find(p=>p.name===n)).filter(Boolean)
+    .sort((a,b)=>(a.type==='棒'?0:1)-(b.type==='棒'?0:1));  // 棒ウキを上に
+  const cols=B.cols, MAXR=Math.min(B.rows,20);
+  const hooks={},rowTypes=[];
+  let r=0,c=0,overflow=0,curType=null;
+  const place=(P,u)=>{
+    if(c>=cols){c=0;r++;}
+    if(r>=MAXR){overflow++;return;}
+    rowTypes[r]=P.type;
+    const hk={prod:P.name,color:u.color,buoy:u.buoy,qty:3};
+    if(u.mixed){hk.mixed=true;hk.mixColors=(P.colors||[]).slice(0,3);}
+    hooks[r+'_'+c]=hk;
+    c++;
+  };
+  for(const P of sel){
+    const units=unitsForProduct(P,byColor);
+    if(!units.length)continue;
+    if(curType!==null&&P.type!==curType){ if(c>0){c=0;r++;} }
+    curType=P.type;
+    if(!tight&&c>0&&units.length<=cols&&c+units.length>cols){c=0;r++;}   // 区切る=商品を割らず次段へ／詰める=そのまま左詰め
+    for(const u of units){ place(P,u); }
+  }
+  B.hooks=hooks;
+  B.rowTypes=[];for(let i=0;i<B.rows;i++)B.rowTypes[i]=rowTypes[i]||(rowTypes[i-1]||'円錐');
+  ensureRowTypes(B);
+  _reqHooks=Object.keys(hooks).length+overflow;   // 必要フック数（溢れ含む）
+  return overflow;
+}
+function runAutoArrange(){
+  const names=[...document.querySelectorAll('.auto-p:checked')].map(c=>c.value);
+  if(!names.length){toast('商品を選んでください');return;}
+  const byColor=((document.querySelector('input[name=autocol]:checked')||{}).value)!=='mix';
+  const tight=((document.querySelector('input[name=autopack]:checked')||{}).value)==='tight';
+  const B=bay();
+  if(visibleHookKeys(B).length&&!confirm('現在の配置を消して自動配置しますか？'))return;
+  lastAuto={names,byColor,tight};           // 段/列変更時に自動再編するため記憶
+  B.candidates=names.slice();               // 商品一覧（チェックボックス）の候補集合
+  const overflow=arrangeInto(names,byColor,tight);
+  save();syncHeader();renderBoard();closeAuto();
+  toast(overflow?('配置しました（'+overflow+'フックは入りきらず・横幅か棚を増やしてください）'):'✓ 自動配置しました');
+}
+function reArrange(){ if(!lastAuto)return false; arrangeInto(lastAuto.names,lastAuto.byColor,lastAuto.tight); return true; }
+// 盤上の並び順（上→下・左→右で商品が最初に現れる順）
+function currentProductOrder(){
+  const B=bay();const seen=[];
+  visibleHookKeys(B).sort((a,b)=>{const pa=a.split('_').map(Number),pb=b.split('_').map(Number);return pa[0]-pb[0]||pa[1]-pb[1];})
+    .forEach(k=>{const p=B.hooks[k].prod;if(!seen.includes(p))seen.push(p);});
+  return seen;
+}
+function baseOrder(){
+  let order=(lastAuto&&lastAuto.names&&lastAuto.names.length)?lastAuto.names.slice():currentProductOrder();
+  currentProductOrder().forEach(p=>{if(!order.includes(p))order.push(p);});
+  return order;
+}
+function orderInsert(order,P,Q){order=order.filter(x=>x!==P);let qi=order.indexOf(Q);if(qi<0)qi=order.length;order.splice(qi,0,P);return order;}
+/* ── 商品メニュー（移動 / 削除） ── */
+function showProdMenu(prod,x,y){
+  _menuProd=prod;
+  document.getElementById('prod-menu-name').textContent=prod;
+  const m=document.getElementById('prod-menu');m.style.display='block';
+  m.style.left=Math.max(6,Math.min(x,window.innerWidth-186))+'px';
+  m.style.top=Math.max(6,Math.min(y,window.innerHeight-140))+'px';
+}
+function closeProdMenu(){const m=document.getElementById('prod-menu');if(m)m.style.display='none';_menuProd=null;}
+function pmMove(){const p=_menuProd;closeProdMenu();if(p)pickProduct(p);}
+function pmDelete(){const p=_menuProd;closeProdMenu();if(p&&confirm('「'+p+'」を棚から外しますか？'))deleteProductFromBay(p);}
+/* ── 移動（掴む→プレビュー→確定/取消） ── */
+function pickProduct(P){
+  _picked=P;_pickOrder=baseOrder();_previewOrder=null;_lastQ=null;
+  document.body.classList.add('organizing');
+  renderBoard();
+  toast('移動中：'+P+' — 置きたい位置の別商品にドラッグ／タップ');
+}
+function previewMove(Q){
+  if(!_picked||!Q||Q===_picked||Q===_lastQ)return;
+  _lastQ=Q;
+  _previewOrder=orderInsert(_pickOrder.slice(),_picked,Q);
+  arrangeInto(_previewOrder,lastAuto?lastAuto.byColor:true,lastAuto?lastAuto.tight:false);
+  renderBoard();
+}
+function commitMove(Q){
+  if(!_picked)return;
+  if(Q&&Q!==_picked)previewMove(Q);
+  const order=_previewOrder||_pickOrder;
+  lastAuto={names:order,byColor:lastAuto?lastAuto.byColor:true,tight:lastAuto?lastAuto.tight:false};
+  _picked=null;_pickOrder=null;_previewOrder=null;_lastQ=null;
+  document.body.classList.remove('organizing');
+  save();renderBoard();toast('移動しました');
+}
+function cancelMove(){
+  if(!_picked)return;
+  arrangeInto(_pickOrder,lastAuto?lastAuto.byColor:true,lastAuto?lastAuto.tight:false);
+  _picked=null;_pickOrder=null;_previewOrder=null;_lastQ=null;
+  document.body.classList.remove('organizing');
+  save();renderBoard();
+}
+function deleteProductFromBay(P){
+  const order=baseOrder().filter(x=>x!==P);
+  const byColor=lastAuto?lastAuto.byColor:true,tight=lastAuto?lastAuto.tight:false;
+  lastAuto={names:order,byColor,tight};
+  arrangeInto(order,byColor,tight);
+  save();renderBoard();toast('「'+P+'」を外しました');
+}
+function setMode(m){if(state.mode==='move'&&m!=='move'){cancelMove();closeProdMenu();}state.mode=m;renderPalette();}
+function setColor(n){state.brush.color=n;save();renderPalette();}
+function setBuoy(b){state.brush.buoy=b;save();renderPalette();}
+function onProdChange(){const n=document.getElementById('sel-prod').value;state.brush.prod=n;const p=PRODUCTS.find(x=>x.name===n);if(p){if(!p.buoys.includes(state.brush.buoy))state.brush.buoy=p.buoys[0]||'';if(p.colors&&p.colors.length&&!p.colors.includes(state.brush.color))state.brush.color=p.colors[0];}save();renderPalette();}
+function chQty(d){state.brush.qty=Math.max(1,Math.min(99,state.brush.qty+d));save();renderPalette();}
+function chRows(d){const B=bay();B.rows=Math.max(1,Math.min(20,B.rows+d));ensureRowTypes(B);document.getElementById('v-rows').textContent=B.rows;reArrange();save();renderBoard();}
+function chCols(d){const B=bay();B.cols=Math.max(1,Math.min(30,B.cols+d));ensureRowTypes(B);document.getElementById('v-cols').textContent=B.cols;reArrange();save();renderBoard();}
+function clearAll(){if(!confirm('この棚（'+bay().name+'）の配置をすべて消しますか？'))return;bay().hooks={};bay().candidates=[];lastAuto=null;save();renderBoard();toast('配置をクリアしました');}
+/* ── 棚（ベイ）管理 ── */
+function renderBays(){document.getElementById('sel-bay').innerHTML=state.bays.map((b,i)=>`<option value="${i}"${i===state.cur?' selected':''}>${b.name}</option>`).join('');}
+function switchBay(v){state.cur=Math.max(0,Math.min(state.bays.length-1,parseInt(v)||0));save();renderBays();syncHeader();renderBoard();}
+function nextBayName(){const used=state.bays.map(b=>b.name);for(const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'){if(!used.includes('棚'+ch))return '棚'+ch;}return '棚'+(state.bays.length+1);}
+function addBay(){state.bays.push({name:nextBayName(),rows:DEF_ROWS,cols:DEF_COLS,hooks:{}});state.cur=state.bays.length-1;save();renderBays();syncHeader();renderBoard();toast('棚を追加しました');}
+function renameBay(){const b=bay();const n=prompt('棚の名前を入力',b.name);if(n!=null&&n.trim()){b.name=n.trim();save();renderBays();updatePrintTitle();}}
+function deleteBay(){if(state.bays.length<=1){toast('最後の棚は削除できません');return;}if(!confirm('「'+bay().name+'」を削除しますか？（この棚の配置も消えます）'))return;state.bays.splice(state.cur,1);state.cur=Math.max(0,state.cur-1);save();renderBays();syncHeader();renderBoard();}
+
+/* ── 起動 ── */
+function syncHeader(){const B=bay();document.getElementById('v-rows').textContent=B.rows;document.getElementById('v-cols').textContent=B.cols;updatePrintTitle();}
+function updatePrintTitle(){document.getElementById('navbar').setAttribute('data-plan',(state.store||'')+(bay()?'　'+bay().name:''));}
+function init(){
+  loadMaster();load();
+  document.getElementById('plan-name').value=state.store;
+  renderBays();syncHeader();renderPalette();renderBoard();
+  const st=document.getElementById('stage3d');
+  st.addEventListener('pointerdown',e=>{
+    if(e.target&&e.target.closest&&e.target.closest('#hint3d'))return;   // 上部バーのボタンは奪わない
+    if(state.mode==='move'){   // 整理モード中は回転しない
+      e.preventDefault();
+      const card=e.target&&e.target.closest?e.target.closest('.card3d'):null;
+      _pd={prod:card&&card.dataset?card.dataset.prod:null,x:e.clientX,y:e.clientY,moved:false};
+      try{st.setPointerCapture(e.pointerId);}catch(_){}
+      return;
+    }
+    _drag3d={x:e.clientX,y:e.clientY,rx:_rx,ry:_ry,moved:false};try{st.setPointerCapture(e.pointerId);}catch(_){}st.style.cursor='grabbing';e.preventDefault();
+  });
+  st.addEventListener('pointermove',e=>{
+    if(state.mode==='move'){
+      if(_pd&&(Math.abs(e.clientX-_pd.x)+Math.abs(e.clientY-_pd.y)>6))_pd.moved=true;
+      if(_picked){const el=document.elementFromPoint(e.clientX,e.clientY);const card=el&&el.closest?el.closest('.card3d'):null;const q=card&&card.dataset?card.dataset.prod:null;if(q)previewMove(q);}
+      return;
+    }
+    if(!_drag3d)return;if(Math.abs(e.clientX-_drag3d.x)+Math.abs(e.clientY-_drag3d.y)>5)_drag3d.moved=true;_ry=_drag3d.ry+(e.clientX-_drag3d.x)*0.3;_rx=Math.max(-25,Math.min(35,_drag3d.rx-(e.clientY-_drag3d.y)*0.25));apply3d();
+  });
+  const endDrag=e=>{
+    if(state.mode==='move'){
+      const el=(e&&e.clientX!=null)?document.elementFromPoint(e.clientX,e.clientY):null;
+      const card=el&&el.closest?el.closest('.card3d'):null;
+      const q=card&&card.dataset?card.dataset.prod:null;
+      if(_picked){ if(q&&q!==_picked)commitMove(q); else if(_lastQ)commitMove(); else cancelMove(); }
+      else if(_pd&&_pd.prod&&!_pd.moved){ showProdMenu(_pd.prod,e.clientX,e.clientY); }
+      _pd=null;return;
+    }
+    if(_drag3d&&!_drag3d.moved&&e&&e.clientX!=null){const el=document.elementFromPoint(e.clientX,e.clientY);const card=el&&el.closest?el.closest('.card3d'):null;if(card&&card.dataset.info)toast(card.dataset.info);}_drag3d=null;st.style.cursor='grab';
+  };
+  st.addEventListener('pointerup',endDrag);st.addEventListener('pointercancel',endDrag);
+  window.addEventListener('resize',()=>{if(_is3d)fit3d();else renderBoard();});
+  // 整理モード：タップ→メニュー（移動/削除）、移動中はドラッグでリアルタイム・プレビュー
+  const board=document.getElementById('board');
+  board.addEventListener('pointerdown',e=>{
+    if(state.mode!=='move')return;
+    e.preventDefault();
+    const cell=e.target.closest?e.target.closest('.hook.filled'):null;
+    _pd={prod:cell&&cell.dataset?cell.dataset.prod:null,x:e.clientX,y:e.clientY,moved:false};
+    try{board.setPointerCapture(e.pointerId);}catch(_){}
+  });
+  board.addEventListener('pointermove',e=>{
+    if(state.mode!=='move')return;
+    if(_pd&&(Math.abs(e.clientX-_pd.x)+Math.abs(e.clientY-_pd.y)>6))_pd.moved=true;
+    if(_picked){const el=document.elementFromPoint(e.clientX,e.clientY);const cell=el&&el.closest?el.closest('.hook.filled'):null;const q=cell&&cell.dataset?cell.dataset.prod:null;if(q)previewMove(q);}
+  });
+  const boardUp=e=>{
+    if(state.mode!=='move'){_pd=null;return;}
+    const el=(e&&e.clientX!=null)?document.elementFromPoint(e.clientX,e.clientY):null;
+    const cell=el&&el.closest?el.closest('.hook.filled'):null;
+    const q=cell&&cell.dataset?cell.dataset.prod:null;
+    if(_picked){ if(q&&q!==_picked)commitMove(q); else if(_lastQ)commitMove(); else cancelMove(); }
+    else if(_pd&&_pd.prod&&!_pd.moved){ showProdMenu(_pd.prod,e.clientX,e.clientY); }
+    _pd=null;
+  };
+  board.addEventListener('pointerup',boardUp);
+  board.addEventListener('pointercancel',boardUp);
+}
+document.getElementById('plan-name').addEventListener('input',updatePrintTitle);
+init();
+</script>
+</body>
+</html>
