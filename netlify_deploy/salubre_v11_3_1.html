@@ -636,8 +636,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-24-D（PDFを高精細化＋真っ黒/固まる/メール未送信を修正）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-24-D」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①PDFを1ページずつ高精細(scale2)で生成＝真っ黒にならず固まらず全ページ鮮明（FAX向き） ②GAS経由の注文メールが実際は送られていなかった不具合を修正（<b>要GAS再デプロイ</b>）</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-24-E（重い注文が届かない不具合＝PDF添付サイズを自動調整）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-24-E」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①PDF高精細（真っ黒/固まる解消・全ページscale2） ②重い注文が「送信完了でも届かない」対策＝ページ数に応じてPDF添付を自動軽量化しGmail上限内に収める（解像度は維持・軽い注文は高画質のまま）</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -1181,6 +1181,12 @@ async function htmlToPdfBase64(htmlStr){
     }
     if(!segs.length) segs=[[0,totalH]];
 
+    // ★添付サイズ対策：注文票PDFはメール添付(GAS→Gmail)される。ページが多いと2つのPDF合計が
+    //   GAS/Gmailの送信上限を超え、重い注文が「送信完了でも届かない」不具合になっていた。
+    //   → 解像度(scale2)は維持し、ページ数に応じてJPEG品質だけ自動で下げ、ファイルを上限内に収める。
+    //   （軽い注文は高画質のまま。FAXで効く線のシャープさはscale維持で保たれる）
+    const q = segs.length<=5 ? 0.9 : segs.length<=10 ? 0.75 : segs.length<=18 ? 0.62 : 0.52;
+
     for(let i=0;i<segs.length;i++){
       const [s,e]=segs[i]; const h=Math.round(e-s);
       // 通常フローの el を、そのページ帯[y=s,高さh]だけ scale:2 でクロップ描画(各canvasは小さい)
@@ -1188,7 +1194,7 @@ async function htmlToPdfBase64(htmlStr){
       if(i>0) pdf.addPage();
       let imgW=pageW, imgH=h/cssPerMm; // css px → mm
       if(imgH>pageH){ imgW=pageW*(pageH/imgH); imgH=pageH; } // 1枚に収める時のはみ出し防止(縦横比維持)
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(pageW-imgW)/2,0,imgW,imgH);
+      pdf.addImage(canvas.toDataURL('image/jpeg',q),'JPEG',(pageW-imgW)/2,0,imgW,imgH);
     }
     return pdf.output('datauristring').split(',')[1];
   }finally{
