@@ -636,8 +636,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-24-C（PDF真っ黒＋送信が固まる＋メール未送信を修正／要GAS再デプロイ）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-24-C」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①PDF真っ黒を修正（長い注文はscaleを自動調整） ②送信で固まる不具合を修正（PDF生成方式を安定版に戻した） ③GAS経由の注文メールが実際は送られていなかった不具合を修正（<b>要GAS再デプロイ</b>）</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-24-D（PDFを高精細化＋真っ黒/固まる/メール未送信を修正）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-24-D」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①PDFを1ページずつ高精細(scale2)で生成＝真っ黒にならず固まらず全ページ鮮明（FAX向き） ②GAS経由の注文メールが実際は送られていなかった不具合を修正（<b>要GAS再デプロイ</b>）</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -1130,79 +1130,65 @@ function updateStatus(){
 function isGasConfigured(){return !!(cfg.gasUrl&&cfg.toEmail);}
 function isEmailConfigured(){return !!(cfg.serviceId&&cfg.templateId&&cfg.publicKey&&cfg.toEmail);}
 async function htmlToPdfBase64(htmlStr){
+  // ★PDF生成方式：印刷HTML(通常フロー)を、html2canvasの「クロップ描画(x/y/width/height)」で
+  //   1ページ分ずつ scale:2 で描く。各ページのcanvasは最大でも約1588×2246px(=357万px)に収まり、
+  //   iOS Safari のcanvas上限(約1,678万px)に絶対かからない＝真っ黒にならない。全ページ高精細のまま。
+  //   ・以前の「全体を1枚の巨大canvasに描く」方式は長い注文でcanvasが上限超過→真っ黒になっていた。
+  //   ・その後の「viewport＋絶対配置」方式は html2canvas がハングした。→ 通常フローへのクロップ描画に確定。
+  //   改ページは .print-block(商品テーブル等・分割不可単位)の上端で行い、商品が途中で切れないようにする。
   const el=document.createElement('div');
   el.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;margin:0;padding:0;box-sizing:border-box;z-index:-9999';
   el.innerHTML=htmlStr;
   document.body.appendChild(el);
-  await new Promise(r=>setTimeout(r,250));
+  await new Promise(r=>setTimeout(r,250)); // フォント・レイアウト確定待ち
   try{
-    // ★真っ黒PDF対策：印刷HTML全体を1枚のcanvasに描くため、注文が長いと
-    //   canvas面積が iOS Safari の上限(約1,678万px)を超え、ブラウザがcanvasを
-    //   真っ黒で返す。→ 面積が安全上限を超えそうなら scale を自動で下げて上限内に収める。
-    //   （小さい注文は従来どおり scale:2 で高精細。長い注文だけ少し粗くなるが黒くはならない）
-    const elW=el.offsetWidth||794, elH=el.offsetHeight||1;
-    const SAFE=14000000; // 安全上限(px)。iOS実上限より余裕を持たせる
-    let scale=2;
-    const areaAt1=elW*elH;
-    if(areaAt1*scale*scale>SAFE) scale=Math.max(0.5,Math.sqrt(SAFE/areaAt1));
-    const canvas=await html2canvas(el,{scale:scale,backgroundColor:'#ffffff',logging:false,useCORS:true,allowTaint:true});
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF('p','mm','a4');
-    const pageW=pdf.internal.pageSize.getWidth();
-    const pageH=pdf.internal.pageSize.getHeight();
-    const pxPerMm=canvas.width/pageW;
-    const pageHpx=Math.floor(pageH*pxPerMm);
-    const ctx=canvas.getContext('2d');
+    const pageW=pdf.internal.pageSize.getWidth();   // 210mm
+    const pageH=pdf.internal.pageSize.getHeight();  // 297mm
+    const CW=794;                                    // 印刷HTMLの基準幅(px)=pageW
+    const cssPerMm=CW/pageW;
+    const PAGE=Math.floor(pageH*cssPerMm);           // 1ページのcss高さ(px) ≒1123
+    const totalH=el.offsetHeight;
 
-    // 1ページを15%以内だけ超える場合はスケールダウンして1枚に収める（無駄な用紙を防ぐ）
-    if(canvas.height<=pageHpx*1.15){
-      const contentHmm=canvas.height/pxPerMm;
-      const s=Math.min(1,pageH/contentHmm);
-      const w=pageW*s,h=contentHmm*s;
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(pageW-w)/2,0,w,h);
-      return pdf.output('datauristring').split(',')[1];
-    }
-
-    // 複数ページ：商品テーブル等「分割してはいけない単位（.print-block）」の上端で改ページする。
-    // これにより1つの商品テーブルがページをまたいで切れることを防ぐ。
-    // html2canvasのDOM座標(px)→canvas座標の倍率scaleで、各単位の上端をcanvasのY値に変換する。
-    const uscale=canvas.width/el.offsetWidth;
+    // .print-block(分割してはいけない単位)の上端をcss pxで収集
     const elTop=el.getBoundingClientRect().top;
-    const unitTops=[];
+    const tops=[];
     el.querySelectorAll('.print-block').forEach(u=>{
-      const t=Math.round((u.getBoundingClientRect().top-elTop)*uscale);
-      if(t>0) unitTops.push(t);
+      const t=Math.round(u.getBoundingClientRect().top-elTop);
+      if(t>0) tops.push(t);
     });
-    unitTops.sort((a,b)=>a-b);
-    // フォールバック：境界から最大15%上方向に明るい行(RGB≥200)を探して改ページ
-    function findBreak(startY,targetY){
-      const margin=Math.floor(pageHpx*0.15);
-      for(let y=targetY;y>Math.max(startY+1,targetY-margin);y--){
-        const d=ctx.getImageData(0,y,canvas.width,1).data;
-        let ok=true;
-        for(let i=0;i<d.length;i+=4){if(d[i]<200||d[i+1]<200||d[i+2]<200){ok=false;break;}}
-        if(ok) return y;
+    tops.sort((a,b)=>a-b);
+
+    // ページ区切り[start,end)を計算。1ページ15%以内の超過なら1枚に収める(用紙節約)。
+    let segs=[];
+    if(totalH<=PAGE*1.15){
+      segs=[[0,totalH]];
+    }else{
+      let start=0;
+      while(start<totalH-0.5){
+        let end; const target=start+PAGE;
+        if(target>=totalH){ end=totalH; }
+        else{
+          let cut=-1;
+          for(const t of tops){ if(t>start+8 && t<=target && t>cut) cut=t; }
+          end=(cut>start+8)?cut:target; // 収まる単位境界が無い(単一ブロックがページ超)ときのみ強制カット
+        }
+        if(end<=start) end=Math.min(start+PAGE,totalH); // 安全弁(必ず前進)
+        segs.push([start,end]);
+        start=end;
       }
-      return targetY;
     }
-    function nextBreak(startY,targetY){
-      // ページ内(startY〜targetY)に収まる範囲で、最も下にある「単位の上端」で切る＝直前の商品まで丸ごと載る
-      let best=-1;
-      for(const t of unitTops){ if(t>startY+40 && t<=targetY && t>best) best=t; }
-      if(best>0) return best;
-      return findBreak(startY,targetY); // 1つの単位がページ高を超える場合のみ従来のピクセル走査
-    }
-    let yPx=0,page=0;
-    while(yPx<canvas.height){
-      if(page>0) pdf.addPage();
-      const target=Math.min(yPx+pageHpx,canvas.height);
-      const endY=(target>=canvas.height)?canvas.height:nextBreak(yPx,target);
-      const sliceH=endY-yPx;
-      const slice=document.createElement('canvas');
-      slice.width=canvas.width;slice.height=sliceH;
-      slice.getContext('2d').drawImage(canvas,0,yPx,canvas.width,sliceH,0,0,canvas.width,sliceH);
-      pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',0,0,pageW,sliceH/pxPerMm);
-      yPx=endY;page++;
+    if(!segs.length) segs=[[0,totalH]];
+
+    for(let i=0;i<segs.length;i++){
+      const [s,e]=segs[i]; const h=Math.round(e-s);
+      // 通常フローの el を、そのページ帯[y=s,高さh]だけ scale:2 でクロップ描画(各canvasは小さい)
+      const canvas=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true,allowTaint:true,x:0,y:s,width:CW,height:h,windowWidth:CW,windowHeight:totalH});
+      if(i>0) pdf.addPage();
+      let imgW=pageW, imgH=h/cssPerMm; // css px → mm
+      if(imgH>pageH){ imgW=pageW*(pageH/imgH); imgH=pageH; } // 1枚に収める時のはみ出し防止(縦横比維持)
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(pageW-imgW)/2,0,imgW,imgH);
     }
     return pdf.output('datauristring').split(',')[1];
   }finally{
