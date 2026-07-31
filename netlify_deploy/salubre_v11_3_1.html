@@ -288,9 +288,9 @@ svg{display:inline-block;vertical-align:middle}
   <div id="order-chips" style="position:sticky;top:0;z-index:30;background:var(--bg);padding:6px 14px;display:none;gap:6px;overflow-x:auto;border-bottom:1px solid var(--border)"></div>
   <div id="products-container"></div>
   <div style="padding:0 14px;margin-bottom:10px">
-    <button class="btn btn-outline" style="width:100%;height:46px" onclick="openProductModal()">
+    <button class="btn btn-outline" style="width:100%;height:46px;border:2px solid var(--accent);color:var(--accent)" onclick="openProductModal()">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      ＋ 商品を追加
+      商品を追加
     </button>
   </div>
   <div class="summary-bar">
@@ -309,15 +309,11 @@ svg{display:inline-block;vertical-align:middle}
     <div style="display:flex;justify-content:space-between;font-size:16px;color:var(--text2);margin-top:3px"><span>必要注文額（×1.5）</span><span id="return-need" style="font-weight:700;color:var(--text)">¥0</span></div>
     <div id="return-alert" style="margin-top:8px;font-size:17px;font-weight:700;text-align:center;border-radius:8px;padding:8px"></div>
   </div>
-  <div class="btn-full"><button class="btn btn-primary" onclick="openOrderReview()">
+  <div class="btn-full"><button class="btn btn-primary" onclick="openOrderReview()" style="background:#1abc9c">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     <span id="send-btn-label">事務所にメール送信</span>
   </button></div>
-  <div style="padding:0 14px;margin-bottom:10px">
-    <button id="hide-rate-btn" onclick="toggleHideRateBtn()" style="width:100%;min-height:48px;padding:6px 10px;line-height:1.25;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text2);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;text-align:center">👁 掛け率・仕入額：表示する</button>
-    <div style="font-size:13px;color:var(--text3);margin-top:4px;text-align:center">タップで切替。「隠す」にすると店舗向け書類・PDF・CSVで掛け率／仕入額を伏せます</div>
-  </div>
-  <div class="btn-full"><button class="btn btn-outline" style="color:#1f4a6b;border-color:#1f4a6b" onclick="openCustomerSheet()">
+  <div class="btn-full"><button class="btn btn-outline" style="color:#1f4a6b;border-color:#1f4a6b" onclick="askThenCustomerSheet()">
     📄 取引先提出用（ご注文確認書）
   </button></div>
   <div class="btn-full"><button class="btn btn-outline" style="color:#1a7a4a;border-color:#1a7a4a" onclick="exportCurrentOrderCSV()">
@@ -484,13 +480,13 @@ svg{display:inline-block;vertical-align:middle}
   <!-- 送信前 最終確認（掛け率・仕入額の表示有無）モーダル -->
   <div class="modal-overlay" id="rate-confirm-modal" style="z-index:10001" onclick="closeModalOutside(event,'rate-confirm-modal')">
     <div class="modal-sheet" style="max-width:420px">
-      <div class="modal-title">📤 送信前の最終確認</div>
-      <div style="font-size:16px;color:var(--text2);margin:4px 0 6px;line-height:1.6">この注文書（PDF・メール）に <b>掛け率・仕入額</b> を表示しますか？</div>
+      <div class="modal-title" id="rate-confirm-title">📤 送信前の最終確認</div>
+      <div id="rate-confirm-text" style="font-size:16px;color:var(--text2);margin:4px 0 6px;line-height:1.6">この注文書（PDF・メール）に <b>掛け率・仕入額</b> を表示しますか？</div>
       <div id="rate-confirm-state" style="font-size:14px;color:var(--text3);margin-bottom:14px"></div>
       <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
-        <button class="btn btn-primary" style="height:48px" onclick="confirmSend(false)">💰 掛け率・仕入額を表示して送信</button>
-        <button class="btn" style="height:48px;background:#c0392b;color:#fff" onclick="confirmSend(true)">🙈 隠して送信（店舗提出用）</button>
-        <button class="btn btn-outline" onclick="closeModal('rate-confirm-modal')">キャンセル</button>
+        <button id="rate-btn-show" class="btn btn-primary" style="height:48px;font-size:18px" onclick="confirmSend(false)">💰 表示して送信</button>
+        <button id="rate-btn-hide" class="btn" style="height:48px;font-size:18px;font-weight:700;background:#c0392b;color:#fff" onclick="confirmSend(true)">🙈 表示しないで送信</button>
+        <button class="btn btn-outline" style="height:48px;font-size:18px" onclick="closeModal('rate-confirm-modal')">キャンセル</button>
       </div>
     </div>
   </div>
@@ -636,8 +632,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-28-I（一時保存の下書きをクラウド共有＝PC↔iPadで続き・消えても復元／要GAS再デプロイ）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-28-I」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①一時保存(下書き)をクラウドへ自動退避し、起動時に自動取得＝PCで保存→iPadで続き・端末のデータが消えても復元（担当者名の設定が必要／<b>要GAS再デプロイ</b>） ②iPhoneで数量入力後に追加ボタンが効かない不具合修正（H）</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-07-31-J（引き去り「在庫から選択」の追加ボタンが効かない不具合を修正 ほか）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-07-31-J」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①引き去り「在庫から選択」でカタログ外/別ブランド商品の追加ボタンが無反応だった不具合を修正 ②一時保存(下書き)のクラウド共有（PC↔iPad・要担当者名／<b>要GAS再デプロイ</b>） ③掛け率トグル廃止＋提出用にも表示確認・ボタン色調整 ほか</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -1670,6 +1666,8 @@ function restoreOrderDraft(id){
   // フィールドを下書き値で上書き
   const setV=(idv,val)=>{const el=document.getElementById(idv);if(el)el.value=val||'';};
   setV('store-name',d.store); setV('contact',d.contact); setV('account',d.account); setV('order-date',d.date);
+  // 下書きの店名から在庫の店舗(currentStoreId)も同期（復元後に「在庫から選択」が使えるように）
+  if(d.store){ const si=STORE_LIST.indexOf(d.store); if(si>=0) currentStoreId=si; }
   const mm=document.getElementById('order-memo'); if(mm)mm.value=d.memo||'';
   // 商品を戻してから得意先→掛率反映
   products=JSON.parse(JSON.stringify(d.products||[]));
@@ -2121,20 +2119,46 @@ async function sendOrder(){
   // 送信（PDF/メール）は掛け率・仕入額の表示有無を最終確認してから
   if(isGasConfigured() || isEmailConfigured()){
     _pendingSendData=d;
-    const st=document.getElementById('rate-confirm-state');
-    if(st)st.textContent='いまの設定：'+(hideRateForStore?'🙈 隠す（店舗提出モード）':'👁 表示する');
-    forceShowOverlay('rate-confirm-modal');   // iOS再描画対策（確認ページの上でも即表示）
+    openRateConfirm('send');
     return;
   }
   await _finishSend(d);
 }
-// 最終確認モーダルの選択（hide=trueで隠す）→ 設定を反映して送信
+// 掛け率・仕入額の表示/非表示を確認するモーダルを、用途(mode)に応じて開く。
+//  'send'=送信前、'customer'=取引先提出用（ご注文確認書）の作成前。
+let _rateConfirmMode='send';
+function openRateConfirm(mode){
+  _rateConfirmMode=mode;
+  const t=document.getElementById('rate-confirm-title'), x=document.getElementById('rate-confirm-text');
+  const bs=document.getElementById('rate-btn-show'), bh=document.getElementById('rate-btn-hide');
+  const st=document.getElementById('rate-confirm-state');
+  if(st)st.textContent='いまの設定：'+(hideRateForStore?'🙈 表示しない':'👁 表示する');
+  if(mode==='customer'){
+    if(t)t.textContent='📄 取引先提出用（ご注文確認書）';
+    if(x)x.innerHTML='この確認書に <b>掛け率・仕入額</b> を表示しますか？';
+    if(bs)bs.textContent='💰 表示して作成';
+    if(bh)bh.textContent='🙈 表示しないで作成';
+  } else {
+    if(t)t.textContent='📤 送信前の最終確認';
+    if(x)x.innerHTML='この注文書（PDF・メール）に <b>掛け率・仕入額</b> を表示しますか？';
+    if(bs)bs.textContent='💰 表示して送信';
+    if(bh)bh.textContent='🙈 表示しないで送信';
+  }
+  forceShowOverlay('rate-confirm-modal');   // iOS再描画対策
+}
+// 取引先提出用：先に表示有無を確認してから確認書を作る
+function askThenCustomerSheet(){
+  if(!products.filter(p=>p.kind!=='return').length){showToast('商品を追加してください');return;}
+  openRateConfirm('customer');
+}
+// 確認モーダルの選択（hide=trueで隠す）→ 設定を反映して、用途に応じた処理を実行
 function confirmSend(hide){
   toggleHideRate(hide);
   updateHideRateUI();
   closeModal('rate-confirm-modal');
+  if(_rateConfirmMode==='customer'){ openCustomerSheet(); return; }   // 取引先提出用を作成
   const d=_pendingSendData; _pendingSendData=null;
-  if(d) _finishSend(d);
+  if(d) _finishSend(d);   // 送信
 }
 async function _finishSend(d){
   let doneMsg='';
@@ -3427,8 +3451,16 @@ function _pushProduct(item,kind){
   return 1;
 }
 function openStockReturnModal(){
-  if(currentStoreId===null||currentStoreId===''){showToast('在庫タブで店舗を選択してください');return;}
-  document.getElementById('stock-return-modal-sub').textContent=STORE_LIST[parseInt(currentStoreId)];
+  // 注文中の店名から在庫の店舗(currentStoreId)を特定して同期する。
+  //  下書き復元後や注文タブ起点でも「その注文の店」の在庫を出せるようにする（currentStoreId未設定で開けない不具合の対策）。
+  const snEl=document.getElementById('store-name');
+  const sn=snEl?snEl.value.trim():'';
+  if(sn){ const idx=STORE_LIST.indexOf(sn); if(idx>=0) currentStoreId=idx; }
+  if(currentStoreId===null||currentStoreId===''){
+    showToast(sn?('「'+sn+'」の在庫がまだありません（在庫タブで登録してください）'):'先に店名を入力してください');
+    return;
+  }
+  document.getElementById('stock-return-modal-sub').textContent=STORE_LIST[parseInt(currentStoreId)]||sn;
   renderStockReturnList();
   document.getElementById('stock-return-modal').classList.add('show');
 }
@@ -3492,9 +3524,14 @@ function addProductToReturnFromModal(code){
 function addProductToReturn(code){
   if(currentStoreId===null){showToast('店舗を選択してください');return;}
   const data=loadStoreProducts(currentStoreId);
-  const prod=data.find(p=>p.code===code);if(!prod){return;}
+  const prod=data.find(p=>p.code===code);if(!prod){showToast('商品が見つかりません');return;}
   if(products.find(x=>x.code===code&&x.kind==='return')){showToast('すでに引き去りに追加されています');return;}
-  const p=getDB().find(x=>x.code===code);if(!p)return;
+  // カタログから商品情報を取得。現ブランドに無ければ両ブランドを探し、それでも無ければ在庫データで補完。
+  // （以前は getDB().find が空だと無言でreturnし「追加ボタンが反応しない」不具合になっていた）
+  let p=getDB().find(x=>x.code===code), pbrand=currentBrand;
+  if(!p){ p=PRODUCTS_DB.find(x=>x.code===code); if(p) pbrand='salubre'; }
+  if(!p){ p=GREX_PRODUCTS_DB.find(x=>x.code===code); if(p) pbrand='grex'; }
+  if(!p){ p={code:prod.code,name:prod.name||code,cat:prod.cat||'その他',priceO:prod.priceO||0,discount:prod.discount||60,sizes:prod.sizes||[],colors:[]}; }
   const colArr=prod.colors.map(col=>{
     const cname=col.cname||col.colorName||'—';
     const co=COLORS_DB.find(c=>c.name===cname)||{id:'02',name:cname,hex:'#aaa'};
@@ -3504,7 +3541,7 @@ function addProductToReturn(code){
   }).filter(col=>Object.keys(col.sizes).length>0);
   if(!colArr.length){showToast('在庫数が入力されていません');return;}
   addKind='return';
-  products.push({id:nextId++,kind:'return',code:p.code,name:p.name,cat:p.cat,priceO:p.priceO,
+  products.push({id:nextId++,kind:'return',brand:pbrand,code:p.code,name:p.name,cat:p.cat,priceO:p.priceO,
     discount:(rateForCat(p.cat)!=null?rateForCat(p.cat):p.discount),
     availSizes:(p.sizes&&p.sizes.length)?p.sizes:defaultSizes(p.cat),
     availColors:p.colors,colors:colArr,collapsed:false});
