@@ -354,6 +354,8 @@ svg{display:inline-block;vertical-align:middle}
     <div style="font-size:18px;font-weight:700;margin-bottom:6px">店舗を選択してください</div>
     <div style="font-size:16px;line-height:1.6">設定タブで店舗を登録してから<br>店頭で棚を見ながら在庫数を入力します</div>
   </div>
+  <!-- 店舗を開いたときの入口。新規入力か過去分の修正かを最初に選ばせる（2026-08-24） -->
+  <div id="stock-gate" style="display:none"></div>
   <div id="stock-main" style="display:none">
     <div style="margin:0 14px 8px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
       <div style="background:var(--danger-light);border-radius:8px;padding:7px;text-align:center">
@@ -390,7 +392,7 @@ svg{display:inline-block;vertical-align:middle}
     <!-- 行3: 前回取得・前回値を復元・クラウド保存（旧「確認/リセット」ボタンは廃止） -->
     <div class="tight-row" style="display:flex;gap:6px;margin:0 14px 8px">
       <button onclick="fetchPrevStockFromCloud()" style="flex:1;min-width:0;height:40px;padding:0 2px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 前回取得</button>
-      <button onclick="restorePrevSnapshot()" style="flex:1;min-width:0;height:40px;padding:0 2px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">↺ 前回値復元</button>
+      <select id="history-pick" onchange="onHistoryPick(this)" style="flex:1;min-width:0;height:40px;padding:0 2px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif"><option value="">📅 いまの入力</option></select>
       <button onclick="syncToCloud()" style="flex:1;min-width:0;height:40px;padding:0 2px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 保存</button>
     </div>
     <div id="stock-last-check" style="font-size:13px;color:var(--text3);text-align:right;margin:-4px 14px 6px"></div>
@@ -632,8 +634,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-08-12-A（シルバーグランデに HD を追加＋DEEPのJANコード誤りを修正）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-08-12-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①シルバーグランデの浮力に <b>HD</b> を追加（HD/DEEP/-00/000/00…の順） ②<b>DEEPのJANコードが誤っていたのを修正</b>（従来はHI DEEPのJANが出ていました。DEEP＝4560421017798/4560421017804）。シルバーグランデ全26SKUをJAN正本と照合済み</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-09-02-A（在庫確認の記録ボタンを復活＋履歴・入口画面が使えるように）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-09-02-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①在庫リストの一番下に <b>「✓ 在庫確認を記録して完了」</b> ボタンを追加（これまでボタンが無く、履歴が1件も残らない状態でした） ②記録すると店舗ごとに3回分の履歴が残り、店舗の入口画面から <b>過去の記録の閲覧・修正</b> ができます ③記録後は入力欄が自動で空になり、次回訪問時に前回の数字が残りません</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -3814,6 +3816,11 @@ function deleteChainPrefix(i){
 let currentStoreId = null;
 let currentBrand = 'salubre';
 let stockFilter = 'all';
+// 過去の在庫を閲覧しているときの世代番号（null=いまの入力欄, 0=前回, 1=2回前, 2=3回前）
+let stockViewGen = null;
+// 過去分を修正しているときの世代番号。null なら「新規入力」。
+// 新規入力のときだけ自動保存する。修正中は明示的に保存させる（誤って上書きしないため）
+let stockEditGen = null;
 let stockCollapsed = new Set();
 function toggleStockCard(code){
   if(stockCollapsed.has(code))stockCollapsed.delete(code);else stockCollapsed.add(code);
@@ -3836,11 +3843,15 @@ function initStockChainSel(){
   sel.innerHTML='<option value="">▼ チェーンを選択</option>'+chains.map(c=>`<option value="${c}">${c}</option>`).join('');
 }
 function onStockChainSel(chain){
+  if(stockEditGen!==null && currentStoreId!==null) restoreEditBackup();
   initStockStoreSel(chain);
   document.getElementById('stock-store-sel').value='';
   currentStoreId=null;
+  stockViewGen=null;
+  stockEditGen=null;
   document.getElementById('stock-no-store').style.display='';
   document.getElementById('stock-main').style.display='none';
+  const g=document.getElementById('stock-gate'); if(g) g.style.display='none';
 }
 function initStockStoreSel(chain){
   const sel=document.getElementById('stock-store-sel'); if(!sel) return;
@@ -3867,15 +3878,23 @@ function onStockStoreSel(val){
     }
     return;
   }
+  // 修正の途中で店舗を変えたら、前の店舗の入力欄を修正前へ戻してから離れる。
+  // 戻さないと、前の店に「その日の記録の値」が入ったまま残ってしまう（2026-08-24）
+  if(stockEditGen!==null && currentStoreId!==null) restoreEditBackup();
   currentStoreId = val;
   const has = val !== '';
+  // 店舗を切り替えたら、前の店舗の「修正中」「閲覧中」は必ず捨てる。
+  // 持ち越すと、別の店の記録を書き換えてしまう（2026-08-24）
+  stockViewGen = null;
+  stockEditGen = null;
+  stockCollapsed.clear();
   document.getElementById('stock-no-store').style.display = has ? 'none' : 'block';
-  document.getElementById('stock-main').style.display   = has ? 'block' : 'none';
-  if(has){
-    const di=document.getElementById('visit-date');
-    if(di){const t=new Date();di.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
-    renderStockList();
-    renderStockPhotos();
+  if(!has){
+    document.getElementById('stock-main').style.display='none';
+    const g=document.getElementById('stock-gate'); if(g) g.style.display='none';
+  } else {
+    // 店舗を開いたら、まず入口で「新規入力」か「過去分の修正」かを選ばせる
+    openStockGate();
   }
   if(typeof updateStoreIndicator==='function')updateStoreIndicator();
 }
@@ -3900,6 +3919,24 @@ function getBrandCAT(){
   return ['PF系円錐ウキ','VF・エクシオ系','T系円錐ウキ','シルバー系円錐ウキ','アズール系','アバカス・エリプス系','ガジェット・レスポンド系','MF・クラッチ系','ダイバーフロート','その他円錐ウキ','棒ウキ系','サプライ品','杓','オリジナルグッズ','パーツ'];
 }
 function getStockKey(sid){ return currentBrand+'_stock2_'+sid; }
+// クラウドや旧データの日付は「2026-07-09T15:00:00.000Z」の形で入っていることがある。
+// 画面に出すときは必ず「2026/7/10」に揃える（2026-08-24）
+function fmtDate(v){
+  if(v===null||v===undefined) return '';
+  const t=String(v).trim();
+  if(!t) return '';
+  if(/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(t)) return t;         // すでに目的の形
+  if(/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(t)){
+    const d=new Date(t);
+    if(!isNaN(d.getTime())) return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+  }
+  return t;   // 「前回」「クラウド」など日付でない印はそのまま出す
+}
+// 商品カードの「前回 8/24」用に月日だけにする
+function fmtDateShort(v){
+  const f=fmtDate(v);
+  return /^\d{4}\/\d{1,2}\/\d{1,2}$/.test(f) ? f.split('/').slice(1).join('/') : f;
+}
 function onBrandSel(b){
   currentBrand=b;
   const bs=document.getElementById('brand-btn-s');
@@ -3965,7 +4002,18 @@ function deleteStorePhoto(i){
   const photos=loadStorePhotos(currentStoreId); photos.splice(i,1);
   saveStorePhotos(currentStoreId,photos); renderStockPhotos();
 }
-function loadStoreProducts(sid){ return JSON.parse(localStorage.getItem(getStockKey(sid)) || '[]'); }
+function loadStoreProducts(sid){
+  const data = JSON.parse(localStorage.getItem(getStockKey(sid)) || '[]');
+  // 旧データは前回1世代（prevSnapshot）しか持っていないので history に移し替える
+  data.forEach(prod=>{
+    if(!Array.isArray(prod.history)){
+      prod.history = (prod.prevSnapshot && prod.prevSnapshot.length)
+        ? [{date: fmtDate(prod.prevDate) || '前回', colors: prod.prevSnapshot}]
+        : [];
+    }
+  });
+  return data;
+}
 function saveStoreProducts(sid, data){ localStorage.setItem(getStockKey(sid), JSON.stringify(data)); }
 
 function openStockAddModal(){
@@ -4188,8 +4236,13 @@ function wizBack(){
 function closeStockWizard(completed){
   document.getElementById('stock-wizard-modal').classList.remove('show');
   renderStockList();
-  // 入力内容を自動でクラウド保存（データ消失防止）。担当者名未設定なら保存だけ（ローカル）。
-  if((cfg.myName||'').trim()){ syncToCloud(); }
+  // 過去分の修正中は自動保存しない。誤って過去の記録を書き換えてしまうのを防ぐため、
+  // 保存は帯の「💾 修正を保存」から確認つきで行わせる（2026-08-24）
+  if(stockEditGen!==null){
+    showToast('✏️ 修正中です。反映するには「💾 修正を保存」を押してください');
+  }
+  // 新規入力は従来どおり自動保存（店頭で入力が消えないように）
+  else if((cfg.myName||'').trim()){ syncToCloud(); }
   else if(completed){ showToast('✓ 入力を保存しました（クラウド保存は設定で担当者名を入力）'); }
 }
 function wizCloseOutside(e){
@@ -4237,8 +4290,9 @@ async function fetchPrevStockFromCloud(){
       if(!byProd[pname]){byProd[pname]={cat,colors:{}};prodOrder.push(pname);}
       if(!byProd[pname].colors[color])byProd[pname].colors[color]={};
       byProd[pname].colors[color][size]=qty;
-      if(chk&&(!latestDate||chk>latestDate))latestDate=chk;
+      if(chk&&(!latestDate||chk>latestDate))latestDate=chk;   // 比較はISOのまま（文字列順＝時系列順）
     });
+    latestDate=fmtDate(latestDate);   // 比較が終わったら表示用の形に直してから保存する
     let data=loadStoreProducts(currentStoreId);
     // 商品が未登録なら、クラウドデータから商品構成を自動生成
     if(!data.length){
@@ -4294,16 +4348,18 @@ async function fetchPrevStockFromCloud(){
     showToast('取得エラー: '+e.message);
   }
 }
-function restorePrevSnapshot(){
+function restoreSnapshotByIndex(idx){
   if(currentStoreId===null) return;
   // 取り消し用に、復元前の在庫状態を丸ごと保存
   try{ localStorage.setItem('salubre_restoreundo_'+currentStoreId, localStorage.getItem(getStockKey(currentStoreId))||'[]'); }catch(e){}
   const data=loadStoreProducts(currentStoreId);
-  let cnt=0;
+  let cnt=0, label='';
   data.forEach(prod=>{
-    if(!prod.prevSnapshot||!prod.prevSnapshot.length) return;
+    const h=(prod.history||[])[idx];
+    if(!h||!h.colors||!h.colors.length) return;
+    if(!label) label=h.date||'';
     prod.colors.forEach(col=>{
-      const prev=prod.prevSnapshot.find(c=>c.cname===col.cname);
+      const prev=h.colors.find(c=>c.cname===col.cname);
       if(!prev) return;
       Object.keys(col.sizes||{}).forEach(k=>{
         const pv=prev.sizes&&prev.sizes[k];
@@ -4311,9 +4367,264 @@ function restorePrevSnapshot(){
       });
     });
   });
+  if(!cnt){ showToast('その日付の在庫データが見つかりませんでした'); return; }
   saveStoreProducts(currentStoreId,data);
   renderStockList();
-  showToast('↺ 前回値を呼び戻しました（'+cnt+'項目）。上の「↩︎ 取り消す」で戻せます。');
+  showToast('↺ '+(label||'前回')+' の値を呼び戻しました（'+cnt+'項目）。「↩︎ 復元を取り消す」で戻せます。');
+}
+function restorePrevSnapshot(){ restoreSnapshotByIndex(0); }
+function onHistoryPick(sel){
+  const v=sel.value;
+  // いきなり入力欄へ書き込まず、まず「その日の姿」を見せる。
+  // 取り込むかどうかは見てから決められる（誤って上書きするのを防ぐ）
+  stockViewGen = (v==='') ? null : parseInt(v,10);
+  renderStockList();
+}
+// ── 店舗の入口（新規入力 / 過去分の修正）─────────────────────
+// 店頭で「表に出ている数字はいつのものか」が分からなくなるのを防ぐため、
+// 店舗を開いたら必ずここを通す（2026-08-24）
+function countStockDraft(){
+  if(currentStoreId===null) return 0;
+  let n=0;
+  loadStoreProducts(currentStoreId).forEach(p=>(p.colors||[]).forEach(c=>{
+    Object.values(c.sizes||{}).forEach(v=>{ if(v!==''&&v!==null&&v!==undefined) n++; });
+  }));
+  return n;
+}
+function listStockGens(){
+  if(currentStoreId===null) return [];
+  const gens=[];
+  loadStoreProducts(currentStoreId).forEach(prod=>{
+    (prod.history||[]).forEach((h,i)=>{ if(h&&h.date&&!gens.some(g=>g.i===i)) gens.push({i:i,date:h.date}); });
+  });
+  return gens.sort((a,b)=>a.i-b.i);
+}
+// 世代プルダウン用の <option> をまとめて作る。
+// selIdx に世代番号を渡すと、その行が選ばれた状態になる（null なら選択なし）
+function genOptionsHtml(gens, selIdx, icon){
+  return gens.map(g=>'<option value="'+g.i+'"'+(g.i===selIdx?' selected':'')+'>'
+    +(icon||'')+(g.i===0?'前回\u3000':(g.i+1)+'回前\u3000')+fmtDate(g.date)+'</option>').join('');
+}
+// 閲覧中に「どの日を見るか」を切り替えるプルダウン。
+// 記録が1つしかないときは切り替え先が無いので出さない（2026-08-24）
+function viewGenPickerHtml(){
+  const gens=listStockGens();
+  if(gens.length<2) return '';
+  const F="font-family:'Noto Sans JP',sans-serif";
+  return '<div style="font-size:12px;font-weight:700;color:var(--accent-dark);margin-bottom:3px">📅 別の日に切り替える</div>'
+    +'<select onchange="onHistoryPick(this)" style="width:100%;min-width:0;min-height:38px;padding:8px 10px;margin-bottom:8px;'
+    +'line-height:1.4;background:var(--surface);border:1px solid var(--accent);color:var(--accent-dark);border-radius:6px;'
+    +'font-size:14px;font-weight:700;cursor:pointer;'+F+'">'
+    + genOptionsHtml(gens, stockViewGen, '') + '</select>';
+}
+// 修正前に退避しておいた入力内容を書き戻す。戻せたら true
+function restoreEditBackup(){
+  if(currentStoreId===null) return false;
+  const bk=localStorage.getItem(editBackupKey());
+  if(bk===null) return false;
+  localStorage.setItem(getStockKey(currentStoreId), bk);
+  localStorage.removeItem(editBackupKey());
+  return true;
+}
+function openStockGate(){
+  const gate=document.getElementById('stock-gate'); if(!gate) return;
+  // 修正の途中でアプリを閉じた場合、入力欄には過去の日の値が残ったままになる。
+  // 入口を通るときに修正前へ戻しておく（2026-08-24）
+  const recovered = (stockEditGen===null) ? restoreEditBackup() : false;
+  stockViewGen=null;
+  stockEditGen=null;
+  document.getElementById('stock-no-store').style.display='none';
+  document.getElementById('stock-main').style.display='none';
+  gate.innerHTML=buildStockGateHtml(recovered);
+  gate.style.display='block';
+  scrollStockTop();
+}
+function scrollStockTop(){
+  const sc=document.getElementById('screen-oos');
+  if(sc) sc.scrollTop=0;
+}
+function buildStockGateHtml(recovered){
+  const storeName=STORE_LIST[parseInt(currentStoreId)]||'この店舗';
+  const draft=countStockDraft();
+  const gens=listStockGens();
+  const lastCheck=fmtDate(localStorage.getItem('salubre_lastcheck_'+currentStoreId));
+  const F="font-family:'Noto Sans JP',sans-serif";
+  let h=`<div style="padding:16px 14px 30px">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:700;color:var(--text)">🏪 ${storeName}</div>
+      <div style="font-size:15px;color:var(--text2);margin-top:4px">きょうは、どちらをしますか？</div>
+      ${lastCheck?`<div style="font-size:13px;color:var(--text3);margin-top:3px">最終確認 ${lastCheck}</div>`:`<div style="font-size:13px;color:var(--text3);margin-top:3px">まだ確認記録がありません</div>`}
+    </div>`;
+  if(recovered){
+    h+=`<div style="background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:9px 11px;margin-bottom:12px;font-size:14px;color:var(--text2);line-height:1.6">
+      ↩︎ 前回、<b>過去分の修正が途中</b>で終わっていました。<br>保存していないので、入力欄は修正を始める前の状態に戻しています。</div>`;
+  }
+  h+=`<div style="background:var(--surface);border:2px solid var(--accent);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:17px;font-weight:700;color:var(--accent-dark);margin-bottom:4px">🆕 新しく在庫を数える</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:10px">いま棚にある数を入力します。入力するたび<b>自動で保存</b>されます。</div>`;
+  if(draft>0){
+    h+=`<div style="background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:14px;color:var(--text2);line-height:1.6">
+      ⚠ 入力欄に <b>${draft}項目</b> の数字が残っています。<br>この店で入力したあと「✓ 在庫確認を記録」をまだ押していない分です。</div>
+      <button onclick="gateStartNew(true)" style="width:100%;min-height:48px;padding:10px 12px;line-height:1.4;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;${F};margin-bottom:6px">🧹 空にして、最初から数える</button>
+      <button onclick="gateStartNew(false)" style="width:100%;min-height:42px;padding:9px 12px;line-height:1.4;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;${F}">▶ 残っている数字の続きから</button>`;
+  } else {
+    h+=`<button onclick="gateStartNew(false)" style="width:100%;min-height:48px;padding:10px 12px;line-height:1.4;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;${F}">▶ 新規入力をはじめる</button>`;
+  }
+  h+=`</div>`;
+  h+=`<div style="background:var(--surface);border:2px solid var(--warn);border-radius:10px;padding:14px">
+    <div style="font-size:17px;font-weight:700;color:var(--warn);margin-bottom:4px">✏️ 過去の記録を修正する</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:10px">数え間違いを直します。この間は<b>自動保存されません</b>。直したあと「💾 修正を保存」を押すと上書きされます。</div>`;
+  if(!gens.length){
+    h+=`<div style="font-size:14px;color:var(--text3);text-align:center;padding:10px 4px;line-height:1.6">直せる記録がまだありません<br>（「✓ 在庫確認を記録」を押すと記録が残ります）</div>`;
+  } else {
+    h+=gens.map(g=>`<button onclick="gateStartEdit(${g.i})" style="width:100%;min-height:46px;padding:10px 12px;line-height:1.4;background:var(--warn-light);color:var(--warn);border:1px solid var(--warn);border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;${F};margin-bottom:6px">✏️ ${g.i===0?'前回':(g.i+1)+'回前'}　${fmtDate(g.date)}</button>`).join('');
+    h+=`<select onchange="gateStartViewSel(this)" style="width:100%;min-width:0;min-height:38px;padding:8px 12px;line-height:1.4;background:none;color:var(--text3);border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;${F}"><option value="">👁 直さずに、見るだけ（日付を選ぶ）</option>${genOptionsHtml(gens,null,'👁\u3000')}</select>`;
+  }
+  h+=`</div></div>`;
+  return h;
+}
+function enterStockMain(){
+  const gate=document.getElementById('stock-gate'); if(gate) gate.style.display='none';
+  document.getElementById('stock-no-store').style.display='none';
+  document.getElementById('stock-main').style.display='block';
+  const di=document.getElementById('visit-date');
+  if(di){const t=new Date();di.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+  renderStockList();
+  renderStockPhotos();
+  scrollStockTop();
+}
+function gateStartNew(clearDraft){
+  if(currentStoreId===null) return;
+  if(clearDraft){
+    if(!confirm('入力欄に残っている数字をすべて空にして、最初から数え直します。\n\n'
+      +'※「✓ 在庫確認を記録」で残した過去の記録は消えません。\nよろしいですか？')) return;
+    const data=loadStoreProducts(currentStoreId);
+    data.forEach(prod=>(prod.colors||[]).forEach(col=>{
+      Object.keys(col.sizes||{}).forEach(k=>{ col.sizes[k]=''; });
+    }));
+    saveStoreProducts(currentStoreId,data);
+    localStorage.removeItem('salubre_restoreundo_'+currentStoreId);
+  }
+  stockViewGen=null; stockEditGen=null;
+  enterStockMain();
+  showToast(clearDraft?'🧹 入力欄を空にしました。棚を数えてください':'▶ 新規入力です。残っている数字の続きから入力できます');
+}
+function gateStartEdit(idx){
+  if(currentStoreId===null) return;
+  enterStockMain();
+  startEditGen(idx);   // 退避・値の差し替え・トーストはこの中でやっている
+}
+function gateStartView(idx){
+  if(currentStoreId===null) return;
+  enterStockMain();
+  stockViewGen=idx;
+  renderStockList();
+}
+// 入口のプルダウンから「見るだけ」に入る。先頭の案内行を選んでも何も起きない
+function gateStartViewSel(sel){
+  const v=sel.value;
+  sel.value='';                       // 入口に戻ってきたとき案内行に戻しておく
+  if(v==='') return;
+  gateStartView(parseInt(v,10));
+}
+
+function editBackupKey(){ return 'salubre_editbackup_'+currentStoreId; }
+
+// 過去分の修正を始める。いまの入力内容は退避して、その日の値を入力欄に入れる
+function startEditGen(idx){
+  if(currentStoreId===null) return;
+  const data=loadStoreProducts(currentStoreId);
+  const h0=(data.find(p=>(p.history||[])[idx])||{});
+  const label=fmtDate(((h0.history||[])[idx]||{}).date);
+  if(!label){ showToast('その日付の記録が見つかりません'); return; }
+  // いまの入力内容を丸ごと退避（修正を取り消したら戻す）
+  try{ localStorage.setItem(editBackupKey(), localStorage.getItem(getStockKey(currentStoreId))||'[]'); }catch(e){}
+  data.forEach(prod=>{
+    const h=(prod.history||[])[idx];
+    prod.colors.forEach(col=>{
+      const hc=h&&h.colors?h.colors.find(x=>(x.cname||'—')===(col.cname||'—')):null;
+      Object.keys(col.sizes||{}).forEach(k=>{
+        col.sizes[k]=(hc&&hc.sizes&&hc.sizes[k]!==undefined)?hc.sizes[k]:'';
+      });
+    });
+  });
+  saveStoreProducts(currentStoreId,data);
+  stockViewGen=null;
+  stockEditGen=idx;
+  renderStockList();
+  showToast('✏️ '+label+' の記録を修正しています。保存するまで反映されません。');
+}
+
+function cancelEditGen(){
+  if(stockEditGen===null) return;
+  const bk=localStorage.getItem(editBackupKey());
+  if(bk!==null){ localStorage.setItem(getStockKey(currentStoreId), bk); }
+  localStorage.removeItem(editBackupKey());
+  stockEditGen=null;
+  renderStockList();
+  showToast('↩︎ 修正をやめました。入力内容は元に戻しています。');
+}
+
+function saveEditGen(){
+  if(stockEditGen===null) return;
+  const idx=stockEditGen;
+  const data=loadStoreProducts(currentStoreId);
+  const h0=(data.find(p=>(p.history||[])[idx])||{});
+  const label=fmtDate(((h0.history||[])[idx]||{}).date);
+  if(!confirm('⚠ '+label+' の記録を、いま画面に出ている数量で上書きします。\n\n'
+    +'元の記録は残りません。クラウドにも反映されます。\n本当に保存しますか？')) return;
+  // 画面の値を、その日の記録として書き戻す
+  data.forEach(prod=>{
+    const h=(prod.history||[])[idx];
+    if(!h) return;
+    h.colors=prod.colors.map(c=>({cname:c.cname,sizes:Object.assign({},c.sizes)}));
+    h.edited_at=new Date().toLocaleString('ja-JP');   // 修正したことは残しておく
+    if(idx===0){ prod.prevSnapshot=h.colors; }        // 既存の表示コードと揃える
+  });
+  saveStoreProducts(currentStoreId,data);
+  // 入力欄は修正前の状態に戻す（修正と新規入力を混ぜない）
+  const bk=localStorage.getItem(editBackupKey());
+  if(bk!==null){
+    const back=JSON.parse(bk);
+    const cur=loadStoreProducts(currentStoreId);
+    cur.forEach((prod,i)=>{ if(back[i]&&back[i].colors) prod.colors=back[i].colors; });
+    saveStoreProducts(currentStoreId,cur);
+  }
+  localStorage.removeItem(editBackupKey());
+  stockEditGen=null;
+  renderStockList();
+  syncToCloud();
+  showToast('💾 '+label+' の記録を修正しました。');
+}
+
+function exitStockView(){
+  stockViewGen=null;
+  renderStockList();
+}
+function applyViewedGen(){
+  if(stockViewGen===null) return;
+  const idx=stockViewGen;
+  stockViewGen=null;
+  restoreSnapshotByIndex(idx);   // 取り消し用の控えを取ってから入力欄へ反映する
+}
+// 直近3回ぶんの確認日をプルダウンに出す。世代番号（0=前回）を value に持たせる
+function updateHistoryPicker(){
+  const sel=document.getElementById('history-pick');
+  if(!sel) return;
+  const head='<option value="">📅 いまの入力</option>';
+  if(currentStoreId===null){ sel.innerHTML=head; return; }
+  const data=loadStoreProducts(currentStoreId);
+  const gens=[];
+  data.forEach(prod=>{
+    (prod.history||[]).forEach((h,i)=>{
+      if(h&&h.date&&!gens.some(g=>g.i===i)) gens.push({i:i,date:h.date});
+    });
+  });
+  gens.sort((a,b)=>a.i-b.i);
+  sel.innerHTML = head + gens.map(g=>
+    '<option value="'+g.i+'">👁 '+(g.i===0?'前回 ':(g.i+1)+'回前 ')+fmtDate(g.date)+'</option>').join('');
+  sel.disabled = (gens.length===0) || (stockEditGen!==null);
+  sel.value = (stockViewGen===null) ? '' : String(stockViewGen);
 }
 function undoRestorePrevSnapshot(){
   if(currentStoreId===null) return;
@@ -4336,20 +4647,47 @@ function resetStoreData(){
 }
 function completeStockCheck(){
   if(currentStoreId===null) return;
+  if(stockEditGen!==null){
+    showToast('過去分の修正中です。先に「💾 修正を保存」か「↩︎ 修正をやめる」を押してください');
+    return;
+  }
+  // 過去を見ている間は押させない。画面には過去の日の数字が出ているが、
+  // 記録されるのは裏に残っている新規入力欄の値なので、見た目と中身が食い違う（2026-09-02）
+  if(stockViewGen!==null){
+    showToast('過去の在庫を表示中です。先に「← いまの入力に戻る」を押してください');
+    return;
+  }
   const dateInput = document.getElementById('visit-date');
   const raw = dateInput ? dateInput.value : '';
   const dateObj = raw ? new Date(raw) : new Date();
   const visitDate = dateObj.getFullYear()+'/'+(dateObj.getMonth()+1)+'/'+(dateObj.getDate());
+  // 記録すると入力欄は空になる。空のまま同じ日にもう一度押すと、
+  // せっかく残したその日の記録を「全部空」で上書きしてしまうので止める（2026-09-02）
+  if(countStockDraft()===0){
+    showToast('入力された数量がありません。棚の個数を入力してから記録してください');
+    return;
+  }
+  if(!confirm(visitDate+' の在庫確認として記録します。\n\n'
+    +'記録すると入力欄は空になり、次回は「前回」として比較に使われます。\n'
+    +'まだ数えていない棚がある場合はキャンセルしてください。')) return;
   const data = loadStoreProducts(currentStoreId);
-  // リセット前にクラウドへ同期（他担当の前回取得に使われる）
+  // 最終確認日を先に更新する。syncToCloud() はこの値を「最終確認」列に使うので、
+  // 更新前に呼ぶと今回数えた数量に前回の訪問日が付いてしまう（2026-08-22 修正）
+  localStorage.setItem('salubre_lastcheck_'+currentStoreId, visitDate);
+  // 値がまだ入っているうちにクラウドへ同期（他担当の「前回取得」に使われる）
   syncToCloud();
   data.forEach(prod=>{
-    prod.prevSnapshot = prod.colors.map(c=>({cname:c.cname,sizes:{...c.sizes}}));
+    const snap = prod.colors.map(c=>({cname:c.cname,sizes:{...c.sizes}}));
+    if(!Array.isArray(prod.history)) prod.history = [];
+    // 同じ日付を2回記録したら上書き。新しい順に3世代だけ残す
+    prod.history = [{date:visitDate, colors:snap}]
+      .concat(prod.history.filter(h=>h && h.date!==visitDate))
+      .slice(0,3);
+    prod.prevSnapshot = snap;   // 既存の表示コードが参照しているので同じ内容を入れておく
     prod.prevDate = visitDate;
     prod.colors.forEach(col=>{ Object.keys(col.sizes||{}).forEach(k=>{ col.sizes[k]=''; }); });
   });
   saveStoreProducts(currentStoreId, data);
-  localStorage.setItem('salubre_lastcheck_'+currentStoreId, visitDate);
   localStorage.removeItem('salubre_restoreundo_'+currentStoreId);
   updateLastCheckLabel();
   renderStockList();
@@ -4360,7 +4698,8 @@ function updateLastCheckLabel(){
   if(currentStoreId===null) return;
   const last = localStorage.getItem('salubre_lastcheck_'+currentStoreId);
   const el = document.getElementById('stock-last-check');
-  if(el) el.textContent = last ? '前回確認: '+last : '';
+  if(el) el.textContent = last ? '前回確認: '+fmtDate(last) : '';
+  updateHistoryPicker();
   // 訪問日入力を今日にリセット
   const di = document.getElementById('visit-date');
   if(di && !di.value){ const t=new Date(); di.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
@@ -4437,7 +4776,22 @@ function orderSizeKeys(code, sizeObj){
 }
 function renderStockList(){
   if(currentStoreId===null) return;
-  const data=loadStoreProducts(currentStoreId);
+  let data=loadStoreProducts(currentStoreId);
+  // 過去を閲覧しているときは、その日の値に丸ごと差し替えて描く。
+  // ここで入れ替えておけば、合計・状態・各浮力の表示が全部その日の姿になる。
+  // 差し替えるのは描画用のコピーだけで、保存されている入力欄の値は触らない。
+  let viewDate='';
+  if(stockViewGen!==null){
+    data=data.map(prod=>{
+      const h=(prod.history||[])[stockViewGen];
+      if(h&&h.date&&!viewDate) viewDate=fmtDate(h.date);
+      const cols=prod.colors.map(col=>{
+        const hc=h&&h.colors?h.colors.find(x=>(x.cname||'—')===(col.cname||'—')):null;
+        return Object.assign({},col,{sizes:hc&&hc.sizes?Object.assign({},hc.sizes):{}});
+      });
+      return Object.assign({},prod,{colors:cols});
+    });
+  }
   const c=document.getElementById('stock-list'); if(!c) return;
   updateStockSummary(data);
   updateLastCheckLabel();
@@ -4472,7 +4826,38 @@ function renderStockList(){
   const storeDef=loadStoreCapDefault(currentStoreId);
 
   let html='';
-  if(localStorage.getItem('salubre_restoreundo_'+currentStoreId)!==null){
+  if(stockEditGen!==null){
+    const eh=(data.find(p=>(p.history||[])[stockEditGen])||{});
+    const elabel=fmtDate(((eh.history||[])[stockEditGen]||{}).date);
+    html+=`<div style="margin:8px 14px;padding:10px 12px;background:var(--warn-light);border:2px solid var(--warn);border-radius:8px">
+      <div style="font-size:16px;font-weight:700;color:var(--warn);margin-bottom:4px">✏️ ${elabel} の記録を修正中</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">この間は<b>自動保存されません</b>。棚を新しく数えるときは、いったん修正をやめてください。</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="cancelEditGen()" style="flex:1;min-width:0;min-height:38px;padding:8px 6px;background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:6px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;font-family:'Noto Sans JP',sans-serif">↩︎ 修正をやめる</button>
+        <button onclick="saveEditGen()" style="flex:1;min-width:0;min-height:38px;padding:8px 6px;background:var(--danger);border:none;color:#fff;border-radius:6px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💾 修正を保存</button>
+      </div>
+    </div>`;
+  }
+  if(stockEditGen===null && stockViewGen===null){
+    // いまの表がどの状態なのか、店頭で一目で分かるようにしておく（2026-08-24）
+    html+=`<div style="margin:8px 14px;padding:7px 12px;background:var(--success-light);border:1px solid var(--success);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span style="font-size:14px;font-weight:700;color:var(--success)">🆕 新規入力中（自動保存されます）</span>
+      <button onclick="openStockGate()" style="background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:6px;font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">⇄ 入口に戻る</button>
+    </div>`;
+  }
+  if(stockViewGen!==null){
+    html+=`<div style="margin:8px 14px;padding:10px 12px;background:var(--accent-light);border:1px solid var(--accent);border-radius:8px">
+      <div style="font-size:15px;font-weight:700;color:var(--accent-dark);margin-bottom:6px">👁 ${viewDate||'過去'} 時点の在庫を表示しています</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">見ているだけです。いまの入力内容は変わっていません。</div>
+      ${viewGenPickerHtml()}
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="exitStockView()" style="width:100%;min-height:38px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:6px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;font-family:'Noto Sans JP',sans-serif">← いまの入力に戻る</button>
+        <button onclick="applyViewedGen()" style="width:100%;min-height:38px;padding:8px 10px;background:var(--success);border:none;color:#fff;border-radius:6px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;font-family:'Noto Sans JP',sans-serif">⬇ この日の数字を新規入力に取り込む</button>
+        <button onclick="startEditGen(${stockViewGen})" style="width:100%;min-height:38px;padding:8px 10px;background:var(--warn);border:none;color:#fff;border-radius:6px;font-size:14px;font-weight:700;line-height:1.4;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✏️ この日の記録を修正する</button>
+      </div>
+    </div>`;
+  }
+  if(stockViewGen===null && localStorage.getItem('salubre_restoreundo_'+currentStoreId)!==null){
     html+=`<div style="margin:8px 14px;padding:8px 12px;background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">
       <span style="font-size:14px;color:var(--text2)">↺ 前回値を復元した状態です</span>
       <button onclick="undoRestorePrevSnapshot()" style="background:var(--warn);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;padding:6px 12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">↩︎ 復元を取り消す</button>
@@ -4483,7 +4868,7 @@ function renderStockList(){
     byCat[cat].forEach(prod=>{
       const ps=getProductStatus(prod);
       const collapsed=stockCollapsed.has(prod.code);
-      const prevDateShortH=prod.prevDate?prod.prevDate.split('/').slice(1).join('/'):'';
+      const prevDateShortH=fmtDateShort(prod.prevDate);
       const nodiffNote=ps==='nodiff'&&prod.prevDate
         ?`<div style="font-size:13px;color:#7a40c8;margin-top:2px">前回と同数 → 入れ替え検討</div>`:'';
       const capViolations=checkCapacityViolation(prod, storeDef.mode, storeDef.retsu);
@@ -4553,12 +4938,30 @@ function renderStockList(){
         }
         html+=`</div>`;
       });
-      html+=`<div style="padding:6px 14px 12px">
-        <button onclick="event.stopPropagation();openStockWizard('${prod.code}')" style="width:100%;height:40px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✏️ 個数を入力する</button>
-      </div>`;
+      // 過去を見ている間は入力させない（見ている数字と入力先が食い違うため）
+      if(stockViewGen===null){
+        html+=`<div style="padding:6px 14px 12px">
+          <button onclick="event.stopPropagation();openStockWizard('${prod.code}')" style="width:100%;height:40px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✏️ 個数を入力する</button>
+        </div>`;
+      }
       html+=`</div></div>`;
     });
   });
+  // 棚を上から順に数え終わった位置に「完了」を置く。
+  // 静的なHTMLに置くと陳列設定前・商品0件・フィルタ該当なしのときも残ってしまうので、
+  // リストを描けたときだけ、その末尾に一緒に描く（2026-09-02）
+  if(stockEditGen===null && stockViewGen===null){
+    const F="font-family:'Noto Sans JP',sans-serif";
+    const dv=(document.getElementById('visit-date')||{}).value;
+    const dlabel=dv?fmtDate(dv):'きょう';
+    const filterNote=stockFilter!=='all'
+      ?`<div style="font-size:12px;color:var(--warn);text-align:center;line-height:1.6;margin-top:2px">⚠ いま絞り込み表示中です。記録されるのは<b>絞り込みに関係なく全商品</b>です</div>`:'';
+    html+=`<div style="margin:14px 14px 4px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px">
+      <button onclick="completeStockCheck()" style="width:100%;min-height:52px;padding:12px;background:var(--success);color:#fff;border:none;border-radius:10px;font-size:17px;font-weight:700;line-height:1.35;cursor:pointer;${F}">✓ 在庫確認を記録して完了</button>
+      <div style="font-size:12.5px;color:var(--text2);text-align:center;line-height:1.6">${dlabel} の記録として残します<br><span style="color:var(--success);font-weight:700">クラウド保存も同時に行われます</span></div>
+      ${filterNote}
+    </div>`;
+  }
   c.innerHTML=html;
 }
 
