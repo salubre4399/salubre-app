@@ -634,8 +634,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-09-02-A（在庫確認の記録ボタンを復活＋履歴・入口画面が使えるように）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-09-02-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①在庫リストの一番下に <b>「✓ 在庫確認を記録して完了」</b> ボタンを追加（これまでボタンが無く、履歴が1件も残らない状態でした） ②記録すると店舗ごとに3回分の履歴が残り、店舗の入口画面から <b>過去の記録の閲覧・修正</b> ができます ③記録後は入力欄が自動で空になり、次回訪問時に前回の数字が残りません</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-09-05-A（「動きなし」判定が補充を見ていなかったのを修正）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-09-05-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: <b>「⚠️ 動きなし」の判定を直しました。</b>これまでは前回と同じ個数なら動きなしと出していたため、<b>補充したあとに同じ数だけ売れると「入れ替え検討」と出てしまっていました</b>。今後は前回訪問のあとに補充や引き去りがあった商品は動きなしと判定せず、<b>「補充 +5 → 推定 5個 動きました」</b>のように動いた数を出します。補充も引き去りも無く30日以上同数のものだけが「動きなし」になります。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -4712,10 +4712,65 @@ function getSizeStatus(qty){
   if(n===0) return 'out'; if(n<=1) return 'low'; return 'ok';
 }
 
+/* ══ 前回訪問からの補充・引き去り ═══════════════════════════════
+   「動きなし」は前回と同数かどうかだけで判定していた。
+   だが補充したあとに同じ数だけ売れると前回と同数に戻るため、
+   よく売れている商品が「入れ替え検討」と出てしまう（社長指摘 2026-09-05）。
+   例）前回3個 → 補充+5で8個 → 5個売れて3個 → 前回と同数 → 動きなし判定。実際は5個売れている。
+
+   注文＝納品ではない（問屋経由なので未着がある）。未着なのに「売れた」と判定すると
+   今度は逆向きの誤りになるので、**補充や引き去りがあった品番は判定そのものをしない**。
+   数字だけ見せて、営業さんの判断に委ねる。
+   「動きなし → 入れ替え検討」は棚から商品を外す判断につながるので、
+   間違えたときの損失が大きい『売れる商品を外してしまう側』に倒さない。 */
+function _stockTime(v){
+  const t=String(v||'').trim();
+  if(!t) return null;
+  const d=new Date(t.replace(/\//g,'-'));
+  return isNaN(d.getTime())?null:d.getTime();   // 「クラウド」「前回」等はnull
+}
+let _MOVE={key:null,map:{}};
+function movementMap(){
+  // 店舗か履歴が変わったときだけ作り直す
+  const key=String(currentStoreId)+'|'+history.length;
+  if(_MOVE.key===key) return _MOVE.map;
+  const map={};
+  const sname=(STORE_LIST[parseInt(currentStoreId)]||'').trim();
+  if(sname){
+    history.forEach(h=>{
+      if(String(h.store||'').trim()!==sname) return;
+      const ht=_stockTime(h.date)||_stockTime(h.sentAt);
+      if(ht===null) return;
+      const add=(list,k)=>{(list||[]).forEach(it=>{
+        const key2=String(it.code||it.name||'').trim(); if(!key2) return;
+        const q=parseInt(it.qty)||0; if(!q) return;
+        if(!map[key2]) map[key2]={add:0,ret:0,at:[]};
+        map[key2][k]+=q; map[key2].at.push(ht);
+      });};
+      add(h.items,'add'); add(h.returns,'ret');
+    });
+  }
+  _MOVE={key,map};
+  return map;
+}
+function movementSince(prod){
+  // 前回訪問より後の注文だけを数える
+  const since=_stockTime(prod.prevDate);
+  const m=movementMap()[String(prod.code||'').trim()]
+       || movementMap()[String(prod.name||'').trim()];
+  if(!m||since===null) return {add:0,ret:0,has:false};
+  let add=0,ret=0;
+  // at は品番ごとの注文時刻。前回訪問より後のものだけ数えたいが、
+  // add/ret は合算済みなので、1件でも訪問後なら合計を採る（安全側＝判定しない方へ倒す）
+  const after=m.at.some(t=>t>=since);
+  if(after){ add=m.add; ret=m.ret; }
+  return {add,ret,has:after&&(m.add>0||m.ret>0)};
+}
+
 function getProductStatus(prod){
   if(prod.prevSnapshot&&prod.prevDate){
     const days=(new Date()-new Date(prod.prevDate.replace(/\//g,'-')))/86400000;
-    if(days>=30){
+    if(days>=30&&!movementSince(prod).has){
       let allSame=true;
       prod.colors.forEach(col=>{
         const prev=prod.prevSnapshot.find(p=>p.cname===col.cname);
@@ -4869,8 +4924,24 @@ function renderStockList(){
       const ps=getProductStatus(prod);
       const collapsed=stockCollapsed.has(prod.code);
       const prevDateShortH=fmtDateShort(prod.prevDate);
-      const nodiffNote=ps==='nodiff'&&prod.prevDate
-        ?`<div style="font-size:13px;color:#7a40c8;margin-top:2px">前回と同数 → 入れ替え検討</div>`:'';
+      // 補充・引き去りがあった品番は「動きなし」と言い切らず、動いた数を出す。
+      // 前回在庫 ＋ 補充 − 引き去り − 今回在庫 ＝ 推定で動いた数（2026-09-05）
+      const mv=movementSince(prod);
+      let nodiffNote='';
+      if(ps==='nodiff'&&prod.prevDate){
+        nodiffNote=`<div style="font-size:13px;color:#7a40c8;margin-top:2px">前回と同数 → 入れ替え検討</div>`;
+      }else if(mv.has&&prod.prevDate){
+        let prevTot=0,nowTot=0;
+        (prod.prevSnapshot||[]).forEach(c=>Object.values(c.sizes||{}).forEach(v=>{if(v!==''&&v!=='NA')prevTot+=parseInt(v)||0;}));
+        prod.colors.forEach(c=>Object.values(c.sizes||{}).forEach(v=>{if(v!==''&&v!=='NA')nowTot+=parseInt(v)||0;}));
+        const moved=prevTot+mv.add-mv.ret-nowTot;
+        const parts=[];
+        if(mv.add) parts.push('補充 +'+mv.add);
+        if(mv.ret) parts.push('引き去り −'+mv.ret);
+        const col=moved>0?'var(--success)':'var(--text2)';
+        nodiffNote=`<div style="font-size:13px;color:${col};margin-top:2px;font-weight:700">`
+          +parts.join('　')+` → 推定 ${moved>0?moved:0}個 動きました</div>`;
+      }
       const capViolations=checkCapacityViolation(prod, storeDef.mode, storeDef.retsu);
       const hooksNeeded=calcProductHooks(prod.colors, storeDef.mode||'mixed');
       const hooksBadge=hooksNeeded>0?`<span style="font-size:13px;color:var(--text3);background:var(--surface2);padding:1px 5px;border-radius:3px" title="自動計算されたフック数">🪝${hooksNeeded}</span>`:'';
