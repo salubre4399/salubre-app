@@ -634,8 +634,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-09-05-A（「動きなし」判定が補充を見ていなかったのを修正）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-09-05-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: <b>「⚠️ 動きなし」の判定を直しました。</b>これまでは前回と同じ個数なら動きなしと出していたため、<b>補充したあとに同じ数だけ売れると「入れ替え検討」と出てしまっていました</b>。今後は前回訪問のあとに補充や引き去りがあった商品は動きなしと判定せず、<b>「補充 +5 → 推定 5個 動きました」</b>のように動いた数を出します。補充も引き去りも無く30日以上同数のものだけが「動きなし」になります。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-09-05-B（補充発注の確認画面に金額とフック数／引き去りの操作性を改善）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-09-05-B」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新: ①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出るので、入れ替えの検討がその場でできます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べるようになりました</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>（外すのに発注する矛盾を防ぎます）。④前回の更新（「動きなし」判定が補充を見ていなかった件）も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -3374,8 +3374,86 @@ function _renderReplenishModalContent(){
       html+=`</div></div>`;
     });
   }
+  html+=_replenishTotalsHtml(orderGroups,manRetGroups,excG);
   document.getElementById('replenish-modal-list').innerHTML=html;
 }
+
+/* 補充発注の確認画面に、金額とフック数を出す（社長要望 2026-09-05）。
+   入れ替えの提案をするときは「いくらになるか」と「フックが何本空くか」を見ながら
+   引き去りを組み立てる。注文タブに入れてしまう前に、ここで分かる必要がある。 */
+function _replenishAmt(name,qty){
+  const p=getDB().find(x=>x.name===name);
+  if(!p||!qty) return 0;
+  const e=effPriceInfo(p);
+  const disc=(rateForCat(p.cat)!=null?rateForCat(p.cat):e.discount);
+  return Math.round(qty*e.priceO*(disc/100));
+}
+function _replenishTotalsHtml(orderGroups,manRetGroups,excG){
+  const def=loadStoreCapDefault(currentStoreId);
+  const mode=def.mode||'mixed';
+  const stock=loadStoreProducts(currentStoreId);
+
+  // 金額
+  let oQty=0,oAmt=0,rQty=0,rAmt=0;
+  orderGroups.forEach(g=>{const q=g.items.reduce((s,r)=>s+r.need,0);oQty+=q;oAmt+=_replenishAmt(g.name,q);});
+  manRetGroups.forEach(g=>{const q=g.items.reduce((s,r)=>s+r.cur,0);rQty+=q;rAmt+=_replenishAmt(g.name,q);});
+  Object.values(excG).forEach(g=>{const q=g.items.reduce((s,r)=>s+r.over,0);rQty+=q;rAmt+=_replenishAmt(g.name,q);});
+
+  // フック：補充後の姿と引き去り後の姿を、それぞれ実際に数え直して差を取る
+  const usedNow=stock.reduce((s,p)=>s+calcProductHooks(p.colors,mode),0);
+  const addBy={},retBy={};
+  orderGroups.forEach(g=>g.items.forEach(r=>{(addBy[r.name]=addBy[r.name]||{})[r.cname+'|'+r.buoyancy]=r.need;}));
+  const retNames=new Set();
+  manRetGroups.forEach(g=>retNames.add(g.name));
+  Object.values(excG).forEach(g=>g.items.forEach(r=>{(retBy[r.name]=retBy[r.name]||{})[r.cname+'|'+r.buoyancy]=r.over;}));
+
+  let addHooks=0,freeHooks=0;
+  stock.forEach(p=>{
+    const before=calcProductHooks(p.colors,mode);
+    if(addBy[p.name]){
+      const after=p.colors.map(c=>{
+        const cn=c.cname||c.colorName||'—', sz={};
+        Object.entries(c.sizes||{}).forEach(([s,q])=>{
+          const base=(q===''||q==='NA')?0:(parseInt(q)||0);
+          sz[s]=String(base+(addBy[p.name][cn+'|'+s]||0));
+        });
+        return {cname:cn,sizes:sz};
+      });
+      addHooks+=Math.max(0,calcProductHooks(after,mode)-before);
+    }
+    if(retNames.has(p.name)) freeHooks+=before;          // 全量引き去り
+    else if(retBy[p.name]){
+      const after=p.colors.map(c=>{
+        const cn=c.cname||c.colorName||'—', sz={};
+        Object.entries(c.sizes||{}).forEach(([s,q])=>{
+          const base=(q===''||q==='NA')?0:(parseInt(q)||0);
+          sz[s]=String(Math.max(0,base-(retBy[p.name][cn+'|'+s]||0)));
+        });
+        return {cname:cn,sizes:sz};
+      });
+      freeHooks+=Math.max(0,before-calcProductHooks(after,mode));
+    }
+  });
+
+  const total=def.totalYoko||0;
+  const after=usedNow+addHooks-freeHooks;
+  const over=total&&after>total;
+  const row=(l,v,cls)=>`<div style="display:flex;justify-content:space-between;font-size:15px;color:var(--text2)${cls==='big'?';padding-top:5px;border-top:1px solid var(--border);margin-top:3px':''}">
+    <span>${l}</span><span style="font-family:'DM Mono',monospace;font-weight:700;font-size:${cls==='big'?'19px':'16px'};color:${cls==='red'?'var(--danger)':'var(--text)'}">${v}</span></div>`;
+
+  return `<div style="background:var(--surface2);border-radius:8px;padding:11px 13px;margin-top:10px;display:flex;flex-direction:column;gap:3px">
+    ${row('補充 '+oQty+'個（卸値）','¥'+oAmt.toLocaleString())}
+    ${rQty?row('引き去り '+rQty+'個（卸値）','−¥'+rAmt.toLocaleString(),'red'):''}
+    ${row('差引','¥'+(oAmt-rAmt).toLocaleString(),'big')}
+    ${total?`<div style="height:6px"></div>
+      ${row('🪝 使うフック','+'+addHooks)}
+      ${freeHooks?row('🪝 空くフック','−'+freeHooks,'red'):''}
+      ${row('🪝 棚の残り',(total-usedNow)+' → '+(total-after))}
+      ${over?`<div style="margin-top:6px;background:var(--danger-light);border:1px solid var(--danger);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--danger);font-weight:700">⚠ フックが ${after-total} 本足りません（${after} / ${total}）。引き去りを増やすか補充を減らしてください</div>`:''}`
+     :`<div style="font-size:13px;color:var(--text3);margin-top:4px">🏬 陳列設定の総フック数が未入力のため、フックの計算はできません</div>`}
+  </div>`;
+}
+
 function buildReplenishOrder(){
   if(currentStoreId===null||currentStoreId===''){showToast('店舗を選択してください');return;}
   const storeName=STORE_LIST[parseInt(currentStoreId)];
@@ -3507,10 +3585,15 @@ function renderStockReturnList(){
       html+=`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border)">
         <div style="flex:1">
           <div style="font-size:17px;font-weight:700">${prod.name}</div>
-          <div style="font-size:14px;color:var(--text3);margin-top:2px">計 ${prod.totalQty}個　<span style="color:#c0392b;font-weight:700" title="この商品を引き去ると空く陳列フック数（自動計算）">🪝 空くフック ${hooksUsed}</span></div>
+          <div style="font-size:14px;color:var(--text3);margin-top:2px">計 ${prod.totalQty}個　<span style="color:#c0392b;font-weight:700" title="この商品を引き去ると空く陳列フック数（自動計算）">🪝 空くフック ${hooksUsed}</span>${
+            added?`　<span style="color:#b5600a;font-weight:700">引き去り済 ${
+              (added.colors||[]).reduce((s,c)=>s+Object.values(c.sizes||{}).reduce((s2,q)=>s2+(parseInt(q)||0),0),0)
+            }個</span>`:''}</div>
         </div>
         ${added
-          ?`<span style="font-size:14px;color:var(--text3);padding:4px 8px">追加済み</span>`
+          ?`<button onclick="addProductToReturnFromModal('${prod.code}')"
+              style="height:30px;padding:0 12px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;flex-shrink:0"
+              title="いま引き去りに入っている分を、在庫の全量で置き換えます">全量にする</button>`
           :`<button onclick="addProductToReturnFromModal('${prod.code}')"
               style="height:30px;padding:0 12px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;flex-shrink:0">追加</button>`
         }
@@ -3527,7 +3610,12 @@ function addProductToReturn(code){
   if(currentStoreId===null){showToast('店舗を選択してください');return;}
   const data=loadStoreProducts(currentStoreId);
   const prod=data.find(p=>p.code===code);if(!prod){showToast('商品が見つかりません');return;}
-  if(products.find(x=>x.code===code&&x.kind==='return')){showToast('すでに引き去りに追加されています');return;}
+  /* すでに引き去りに入っていても、在庫の全量で置き換えられるようにする（社長要望 2026-09-05）。
+     補充発注で余剰分だけが自動的に引き去りへ入ると、「追加済み」で固まって
+     全量を外せなくなっていた。
+     やりたいことは「棚からこの商品を全部外して、新しい商品のフックを空ける」なので、
+     足し算ではなく置き換えが正しい。 */
+  const already=products.find(x=>x.code===code&&x.kind==='return');
   // カタログから商品情報を取得。現ブランドに無ければ両ブランドを探し、それでも無ければ在庫データで補完。
   // （以前は getDB().find が空だと無言でreturnし「追加ボタンが反応しない」不具合になっていた）
   let p=getDB().find(x=>x.code===code), pbrand=currentBrand;
@@ -3543,12 +3631,24 @@ function addProductToReturn(code){
   }).filter(col=>Object.keys(col.sizes).length>0);
   if(!colArr.length){showToast('在庫数が入力されていません');return;}
   addKind='return';
-  products.push({id:nextId++,kind:'return',brand:pbrand,code:p.code,name:p.name,cat:p.cat,priceO:p.priceO,
-    discount:(rateForCat(p.cat)!=null?rateForCat(p.cat):p.discount),
-    availSizes:(p.sizes&&p.sizes.length)?p.sizes:defaultSizes(p.cat),
-    availColors:p.colors,colors:colArr,collapsed:false});
+  if(already){
+    already.colors=colArr;                     // 余剰分だけの状態を、在庫の全量で置き換える
+  }else{
+    products.push({id:nextId++,kind:'return',brand:pbrand,code:p.code,name:p.name,cat:p.cat,priceO:p.priceO,
+      discount:(rateForCat(p.cat)!=null?rateForCat(p.cat):p.discount),
+      availSizes:(p.sizes&&p.sizes.length)?p.sizes:defaultSizes(p.cat),
+      availColors:p.colors,colors:colArr,collapsed:false});
+  }
+  /* 棚から外す商品に補充を出すのは矛盾するので、同じ品番の補充・注文は取り下げる。
+     黙って消すと気づけないので、消したことを知らせる（社長要望 2026-09-05）。 */
+  const dropped=products.filter(x=>x.code===code&&x.kind!=='return');
+  let dropQty=0;
+  dropped.forEach(x=>(x.colors||[]).forEach(c=>Object.values(c.sizes||{}).forEach(q=>dropQty+=parseInt(q)||0)));
+  if(dropped.length) products=products.filter(x=>!(x.code===code&&x.kind!=='return'));
+  const total=colArr.reduce((s,c)=>s+Object.values(c.sizes).reduce((s2,q)=>s2+(parseInt(q)||0),0),0);
   renderProducts();
-  showToast('↩️ '+p.name+' を引き去りに追加しました');
+  showToast((already?'↩️ '+p.name+' を全量（'+total+'個）に置き換えました':'↩️ '+p.name+' を引き去りに追加しました')
+    +(dropped.length?'／補充 '+dropQty+'個 を取り下げました':''));
 }
 function createReplenishOrder(){
   closeModal('replenish-modal');
