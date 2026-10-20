@@ -228,48 +228,131 @@ svg{display:inline-block;vertical-align:middle}
   .tight-row{flex-wrap:wrap}
   .tight-row>button,.tight-row>input{flex:1 1 47%!important;min-width:0}
 }
-/* ══ 🏭 工場の進み具合（2026-10-15 追加）══
-   工場サーバー → GAS（工場進捗シート）に10分おきに届くスナップショットを見るだけの画面。送信はしない。 */
-.fac-head{display:flex;align-items:center;gap:10px;padding:12px 14px 0}
-.fac-time{flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--text)}
-.fac-time small{display:block;font-size:13px;font-weight:400;color:var(--text3)}
-.fac-refresh{height:40px;padding:0 14px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;flex-shrink:0}
-.fac-refresh:disabled{opacity:.5}
-.fac-alert{margin:8px 14px 0;padding:8px 12px;border-radius:var(--rs);font-size:15px;line-height:1.5}
-.fac-alert.warn{background:var(--warn-light);color:var(--warn);border:1px solid #f0d2ad}
-.fac-alert.err{background:var(--danger-light);color:var(--danger);border:1px solid #f1c4bf}
-.fac-cats{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0}
-.fac-cat{height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:15px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap}
-.fac-cat b{margin-left:4px;font-family:'DM Mono',monospace;font-weight:500}
-.fac-cat.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.fac-cat.sort.on{background:var(--success);border-color:var(--success)}
-.fac-search{display:block;width:calc(100% - 28px);margin:10px 14px 0;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:17px;font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--text);outline:none}
-.fac-search:focus{border-color:var(--accent)}
-.fac-count{padding:8px 14px 0;font-size:13px;color:var(--text3)}
-.fac-list{display:flex;flex-direction:column;gap:10px;padding:8px 14px 14px}
-.fac-lot{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.fac-r1{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between}
-.fac-name{font-size:18px;font-weight:700;color:var(--text);min-width:0;overflow-wrap:anywhere}
-.fac-demo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--warn-light);color:var(--warn);border:1px solid #f0d2ad;font-size:12px;font-weight:700;vertical-align:2px}
-.fac-sub{font-size:12px;color:var(--text3);font-weight:400;margin-left:8px;font-family:'DM Mono',monospace;white-space:nowrap;display:inline-block}
-.fac-qty{font-size:16px;font-weight:500;color:var(--text2);white-space:nowrap;margin-left:10px}
-.fac-eta{font-size:15px;font-weight:700;color:var(--success)}
-.fac-eta.w{color:var(--warn)}
-.fac-eta small{font-weight:400;color:var(--text3);font-size:12px;margin-left:4px}
-.fac-step{font-size:15px;color:var(--text)}
-.fac-step b{color:var(--accent)}
-.fac-step .n{color:var(--text2);margin-left:8px;white-space:nowrap}
-.fac-bar{height:10px;border-radius:6px;background:var(--surface2);overflow:hidden}
-.fac-bar i{display:block;height:100%;background:var(--accent)}
-.fac-gous{display:flex;flex-wrap:wrap;gap:6px}
-.fac-g{background:var(--accent-light);border-radius:8px;padding:4px 9px;font-size:14px;color:var(--accent-dark);font-variant-numeric:tabular-nums}
-.fac-g b{margin-left:4px}
-.fac-g.z{opacity:.4}
-.fac-g.none{background:var(--surface2);color:var(--text2)}
-.fac-sum{background:var(--accent-light);border:1px solid #bcd6ea;border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
-.fac-sum-t{font-size:15px;color:var(--accent-dark)}
-.fac-sum .fac-g{background:var(--surface)}
-.fac-empty{padding:30px 14px;text-align:center;color:var(--text3);font-size:16px}
+/* ══ 🏭 工場の進み具合（2026-10-15 追加・2026-10-20-C で工場PCのような表に）══
+   工場サーバー → GAS（工場進捗シート）に10分おきに届くスナップショットを見るだけの画面。送信はしない。
+   ここの見た目は #screen-factory の中だけに効く（ほかの画面には漏らさない）。 */
+#screen-factory{--fx-ink:var(--text);--fx-ink2:var(--text2);--fx-ink3:var(--text3);--fx-line:var(--border);--fx-line2:#cfc9bf;
+  --fx-card:var(--surface);--fx-bg:var(--bg);--fx-rowh:#faf8f4;--fx-blue:var(--accent);--fx-blu-s:var(--accent-light);
+  --fx-green:var(--success);--fx-grn-s:var(--success-light);--fx-amber:var(--warn);--fx-amb-s:var(--warn-light);
+  --fx-red:var(--danger);--fx-red-s:var(--danger-light);--fx-mono:'DM Mono',ui-monospace,Consolas,Menlo,monospace;font-size:15px;line-height:1.5}
+#screen-factory .fac-head{display:flex;align-items:center;gap:10px;padding:12px 14px 0}
+#screen-factory .fac-time{flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--text)}
+#screen-factory .fac-time small{display:block;font-size:13px;font-weight:400;color:var(--text3)}
+#screen-factory .fac-refresh{height:40px;padding:0 14px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;flex-shrink:0}
+#screen-factory .fac-refresh:disabled{opacity:.5}
+#screen-factory .fac-alert{margin:8px 14px 0;padding:8px 12px;border-radius:var(--rs);font-size:15px;line-height:1.5}
+#screen-factory .fac-alert.warn{background:var(--warn-light);color:var(--warn);border:1px solid #f0d2ad}
+#screen-factory .fac-alert.err{background:var(--danger-light);color:var(--danger);border:1px solid #f1c4bf}
+#screen-factory .fx{padding:10px 14px 14px;min-width:0}
+#screen-factory .fx-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#screen-factory .fx-qbox{position:relative;flex:1 1 320px;min-width:0}
+#screen-factory .fx-qbox input{width:100%;height:46px;border:1.5px solid var(--fx-line2);border-radius:10px;background:var(--fx-card);color:var(--fx-ink);font-family:'Noto Sans JP',sans-serif;font-size:16px;padding:0 40px 0 14px;outline:none;-webkit-appearance:none;appearance:none}
+#screen-factory .fx-qbox input:focus{border-color:var(--fx-blue)}
+#screen-factory .fx-qbox input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+#screen-factory .fx-x{position:absolute;right:7px;top:7px;width:32px;height:32px;border:0;border-radius:16px;background:var(--fx-line);color:var(--fx-ink2);font-size:16px;cursor:pointer;display:none}
+#screen-factory .fx-qbox.has .fx-x{display:block}
+#screen-factory .fx-chips{display:flex;gap:6px;flex-wrap:wrap}
+#screen-factory .fx-chip{height:38px;padding:0 14px;border:1.5px solid var(--fx-line2);border-radius:19px;background:var(--fx-card);color:var(--fx-ink);font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+#screen-factory .fx-chip b{margin-left:5px;font-weight:500;color:var(--fx-ink3);font-size:12px;font-family:var(--fx-mono)}
+#screen-factory .fx-chip.on{border-color:var(--fx-blue);background:var(--fx-blu-s);color:var(--fx-blue)}
+#screen-factory .fx-chip.on b{color:var(--fx-blue)}
+#screen-factory .fx-pwrap{margin-top:10px;background:var(--fx-card);border:1px solid var(--fx-line);border-radius:12px;padding:10px 12px}
+#screen-factory .fx-ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--fx-ink2);margin-bottom:6px}
+#screen-factory .fx-ph a{color:var(--fx-blue);cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap}
+#screen-factory .fx-dotg{color:var(--fx-green)}
+#screen-factory .fx-pchips{display:flex;gap:6px;flex-wrap:wrap;max-height:70px;overflow:hidden}
+#screen-factory .fx-pchips.all{max-height:none}
+#screen-factory .fx-pc{height:32px;padding:0 11px;border:1px solid var(--fx-line2);border-radius:8px;background:var(--fx-bg);color:var(--fx-ink);font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#screen-factory .fx-pc b{margin-left:4px;color:var(--fx-ink3);font-weight:500}
+#screen-factory .fx-pc.on{background:var(--fx-blue);border-color:var(--fx-blue);color:#fff}
+#screen-factory .fx-pc.on b{color:#e8f0ff}
+#screen-factory .fx-pc .w{display:inline-block;width:7px;height:7px;border-radius:4px;background:var(--fx-green);margin-right:5px;vertical-align:1px}
+#screen-factory .fx-count{font-size:13px;color:var(--fx-ink2);margin:10px 2px 8px}
+#screen-factory .fx-count b{color:var(--fx-ink)}
+#screen-factory .fx-sum{background:var(--fx-card);border:1px solid var(--fx-line);border-left:4px solid var(--fx-blue);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+#screen-factory .fx-sum .t{font-size:14px}
+#screen-factory .fx-sum .t b{font-size:15px}
+#screen-factory .fx-sum .s{color:var(--fx-ink2);font-size:13px}
+#screen-factory .fx-gous{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#screen-factory .fx-g{display:inline-flex;gap:4px;align-items:baseline;padding:2px 8px;border-radius:6px;background:var(--fx-blu-s);color:var(--fx-blue);font-size:13px;font-family:var(--fx-mono);border:1px solid transparent}
+#screen-factory .fx-g b{font-weight:700}
+#screen-factory .fx-g.z{background:var(--fx-bg);color:var(--fx-ink3)}
+#screen-factory .fx-g.yt{background:transparent;border:1px dashed var(--fx-line2);color:var(--fx-ink2)}
+#screen-factory .fx-g.yt b{font-weight:500}
+#screen-factory .fx-g.yt.z{color:var(--fx-ink3);opacity:.7}
+#screen-factory .fx-g.none{font-family:inherit;background:var(--fx-bg);color:var(--fx-ink2)}
+#screen-factory .fx-g.col{font-family:inherit}
+#screen-factory .fx-cdot{display:inline-block;width:10px;height:10px;border-radius:5px;border:1px solid rgba(0,0,0,.18);vertical-align:-1px;margin-right:2px}
+#screen-factory .fx-tag{display:inline-block;margin-left:6px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:700;background:var(--fx-amb-s);color:var(--fx-amber);border:1px solid #f0d2ad;vertical-align:1px}
+#screen-factory .fx-src{display:inline-block;margin-left:6px;font-size:11px;color:var(--fx-ink3)}
+#screen-factory .fx-src.ok{color:var(--fx-green);font-weight:600}
+#screen-factory .fx-tbl{background:var(--fx-card);border:1px solid var(--fx-line);border-radius:12px;overflow:hidden}
+#screen-factory .fx-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.25fr) 112px 64px 140px 112px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--fx-line)}
+#screen-factory .fx-row.fx-hd{border-top:0;background:var(--fx-rowh);font-size:12px;color:var(--fx-ink2);padding-top:8px;padding-bottom:8px}
+#screen-factory .fx-hd span{cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap}
+#screen-factory .fx-hd span.on{color:var(--fx-blue);font-weight:700}
+#screen-factory .fx-hd .ar{font-size:10px;margin-left:2px;opacity:.7}
+#screen-factory .fx-row.r{cursor:pointer}
+#screen-factory .fx-row.r:hover{background:var(--fx-rowh)}
+#screen-factory .fx-row.open{background:var(--fx-rowh)}
+#screen-factory .fx-nm{min-width:0}
+#screen-factory .fx-nm b{font-size:15px;overflow-wrap:anywhere}
+#screen-factory .fx-nm .code{display:block;font-family:var(--fx-mono);font-size:12px;color:var(--fx-ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#screen-factory .fx-pr{min-width:0;font-size:14px;overflow-wrap:anywhere}
+#screen-factory .fx-pr .si{display:block;font-size:12px;color:var(--fx-ink3);font-family:var(--fx-mono)}
+#screen-factory mark{background:#fde68a;color:inherit;border-radius:3px;padding:0 1px}
+#screen-factory .fx-st{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:600;line-height:1.35;max-width:100%;overflow-wrap:anywhere}
+#screen-factory .fx-st.work{background:var(--fx-blu-s);color:var(--fx-blue)}
+#screen-factory .fx-st.wait{background:var(--fx-amb-s);color:var(--fx-amber)}
+#screen-factory .fx-qty{text-align:right;font-family:var(--fx-mono);font-size:14px;white-space:nowrap}
+#screen-factory .fx-qty small{font-family:'Noto Sans JP',sans-serif;color:var(--fx-ink3);font-size:11px;margin-left:1px}
+#screen-factory .fx-pb{display:flex;gap:8px;align-items:center;min-width:0}
+#screen-factory .fx-pbar{flex:1;height:8px;border-radius:4px;background:var(--fx-line);overflow:hidden}
+#screen-factory .fx-pbar i{display:block;height:100%;background:var(--fx-green);border-radius:4px}
+#screen-factory .fx-pb .n{font-family:var(--fx-mono);font-size:13px;min-width:36px;text-align:right}
+#screen-factory .fx-ec{min-width:0}
+#screen-factory .fx-eta{font-size:13px;font-weight:700;color:var(--fx-green);white-space:nowrap}
+#screen-factory .fx-eta.w{color:var(--fx-amber)}
+#screen-factory .fx-eta small{display:block;font-weight:400;color:var(--fx-ink3);font-size:11px;white-space:normal}
+#screen-factory .fx-due{display:inline-block;margin-top:3px;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600;background:var(--fx-grn-s);color:var(--fx-green)}
+#screen-factory .fx-due.late{background:var(--fx-red-s);color:var(--fx-red)}
+#screen-factory .fx-det{padding:4px 14px 14px;background:var(--fx-rowh)}
+#screen-factory .fx-det-in{background:var(--fx-card);border:1px solid var(--fx-line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px}
+#screen-factory .fx-det-in .k{font-size:11px;color:var(--fx-ink3)}
+#screen-factory .fx-det-in .v{font-size:14px;overflow-wrap:anywhere}
+#screen-factory .fx-det-in .full{grid-column:1/-1}
+#screen-factory .fx-det-in .note{font-size:12px;color:var(--fx-ink2);margin-top:4px}
+#screen-factory .fx-steps{display:flex;gap:2px;margin-top:4px}
+#screen-factory .fx-steps i{flex:1;height:10px;border-radius:2px;background:var(--fx-line)}
+#screen-factory .fx-steps i.d{background:var(--fx-green)}
+#screen-factory .fx-steps i.c{background:var(--fx-blue)}
+#screen-factory .fx-empty{padding:24px;text-align:center;color:var(--fx-ink2)}
+#screen-factory .fx-more{display:block;width:100%;height:44px;border:0;border-top:1px solid var(--fx-line);background:var(--fx-card);color:var(--fx-blue);font-family:'Noto Sans JP',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
+#screen-factory .fx-stm{display:none!important}
+/* iPad 縦（中身の幅 700px） */
+@media (min-width:744px) and (max-width:1023px){
+  #screen-factory .fx-row{grid-template-columns:minmax(0,1.45fr) minmax(0,1.2fr) 96px 56px 100px 96px;gap:8px;padding:10px 12px}
+  #screen-factory .fx-pb .n{min-width:32px}
+  #screen-factory .fx-det{padding:4px 12px 12px}
+}
+/* スマホ（中身の幅 430px まで）：表をカードに組み替える */
+@media (max-width:743px){
+  #screen-factory .fx-row.fx-hd{display:flex;flex-wrap:wrap;gap:6px 12px}
+  #screen-factory .fx-row.fx-hd::before{content:"並べ替え：";color:var(--fx-ink3)}
+  #screen-factory .fx-row.r{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm qty" "pr pr" "pb eta";gap:6px 10px;padding:12px}
+  #screen-factory .fx-row.r .fx-nm{grid-area:nm}
+  #screen-factory .fx-row.r .fx-qty{grid-area:qty}
+  #screen-factory .fx-row.r .fx-pr{grid-area:pr}
+  #screen-factory .fx-row.r .fx-pb{grid-area:pb}
+  #screen-factory .fx-row.r .fx-ec{grid-area:eta;text-align:right}
+  #screen-factory .fx-row.r .fx-stc{display:none}
+  #screen-factory .fx-pr .fx-stm{display:inline-block!important;margin-left:6px;vertical-align:1px}
+  #screen-factory .fx-chips.fx-cr{flex-wrap:nowrap;overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  #screen-factory .fx-chips.fx-cr::-webkit-scrollbar{display:none}
+  #screen-factory .fx-chips.fx-cr .fx-chips{flex-wrap:nowrap}
+  #screen-factory .fx-chip{height:36px;padding:0 12px}
+  #screen-factory .fx-det{padding:4px 10px 12px}
+}
 @media print{
   body>.wrap{display:none!important}
   #print-overlay{position:static!important;display:block!important;overflow:visible!important}
@@ -677,8 +760,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-B（工場の進み具合・下書きの共有・クラウドの合言葉）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-B」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20-B）: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-C（工場タブが工場PCのような表に・工程でも探せる・号数が予定か実数か分かる）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-C」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20-C）: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -760,17 +843,32 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- FACTORY（🏭 工場の進み具合：見るだけ。2026-10-15 追加） -->
+<!-- FACTORY（🏭 工場の進み具合：見るだけ。2026-10-15 追加・2026-10-20-C で工場PCのような表に） -->
 <div class="screen" id="screen-factory">
   <div class="fac-head">
     <div class="fac-time" id="fac-time">まだ読み込んでいません</div>
     <button class="fac-refresh" id="fac-refresh" onclick="loadFactory()">↻ 最新にする</button>
   </div>
   <div id="fac-alerts"></div>
-  <div class="fac-cats" id="fac-cats"></div>
-  <input type="search" class="fac-search" id="fac-search" placeholder="🔍 品番・品名でさがす（例：VFファング、SA-350）" oninput="renderFactory()" autocomplete="off">
-  <div class="fac-count" id="fac-count"></div>
-  <div class="fac-list" id="fac-list"></div>
+  <div class="fx">
+    <div class="fx-tools">
+      <div class="fx-qbox" id="fac-qbox">
+        <input type="search" id="fac-search" enterkeyhint="search" autocomplete="off" placeholder="品番・品名・工程・号数で探す（例：SA-350、VFファング、色スプレー）" oninput="facOnSearch()">
+        <button class="fx-x" type="button" aria-label="消す" onclick="facClearSearch()">×</button>
+      </div>
+      <div class="fx-chips fx-cr"><span id="fac-cats" class="fx-chips"></span><button class="fx-chip" id="fac-working" type="button" onclick="toggleFacWork()">作業中だけ</button></div>
+    </div>
+    <div class="fx-pwrap" id="fac-pwrap">
+      <div class="fx-ph"><span>いまの工程で絞る（数字＝その工程にいるロット数・<span class="fx-dotg">●</span>＝だれか作業中）</span><a id="fac-pmore" role="button" onclick="toggleFacPall()">全部見る</a></div>
+      <div class="fx-pchips" id="fac-pchips"></div>
+    </div>
+    <div class="fx-count" id="fac-count"></div>
+    <div id="fac-sums"></div>
+    <div class="fx-tbl">
+      <div class="fx-row fx-hd" id="fac-hd"></div>
+      <div id="fac-list"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Tabbar -->
@@ -5826,7 +5924,13 @@ const FAC_FIXED_CATS=[['ensui_uki','円錐ウキ'],['bou_uki','棒ウキ'],['lur
 let facSnap=null;          // {generated_at, lots:[...]}
 let facCat='all';
 let facCatList=['all'];
-let facSortEta=false;      // false＝届いた順のまま／true＝完成が近い順
+let facWork=false;         // 作業中だけ
+let facProc='';           // いまの工程で絞る（チップ）
+let facProcList=[];
+let facSort=null;          // 見出しで並べ替え {k, dir}。null＝作業中 → 完成が近い順
+let facOpen=null;          // 開いている行（lot_id）
+let facLimit=80;           // 一度に出す行の数（「あと○件を出す」で増やす）
+let facPall=false;         // 工程のチップを全部見る
 let facLoading=false;
 let facError='';           // 読み込み失敗・データ無しのお知らせ
 function _facEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -5844,7 +5948,7 @@ function _facNorm(s){
   let t=String(s==null?'':s);
   try{ t=t.normalize('NFKC'); }catch(e){}
   t=t.toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
-  return t.replace(/[\s\-‐-―−・]/g,'');
+  return t.replace(/[\s\-‐-―−・()（）/]/g,'');
 }
 function _facCatOf(l){ return String(l.cat||l.cat_label||'その他'); }
 function _facLabelOf(l){ const c=_facCatOf(l); const f=FAC_FIXED_CATS.find(x=>x[0]===c); return f?f[1]:String(l.cat_label||l.cat||'その他'); }
@@ -5884,8 +5988,6 @@ async function loadFactory(){
     renderFactory();
   }
 }
-function setFacCat(c){ facCat=c; renderFactory(); }
-function toggleFacSort(){ facSortEta=!facSortEta; renderFactory(); }
 
 function renderFactoryHead(){
   const tEl=document.getElementById('fac-time'); if(!tEl) return;
@@ -5904,82 +6006,234 @@ function renderFactoryHead(){
   document.getElementById('fac-alerts').innerHTML=a;
 }
 
-function _facGouChips(gous){
+// 号数のチップ。yt＝予定・目安の数（薄く・点線）
+function _facGouChips(gous, yt){
   return gous.map(x=>{
     const has=(typeof x.n==='number'&&isFinite(x.n));
-    return '<span class="fac-g'+(has?'':' z')+'">'+_facEsc(x.g)+'<b>'+(has?_facNum(x.n):'–')+'</b></span>';
+    return '<span class="fx-g'+(has&&x.n?'':' z')+(yt?' yt':'')+'">'+_facEsc(x.g)+'<b>'+(has?_facNum(x.n):'–')+'</b></span>';
   }).join('');
+}
+// 作業中の工程が2つ以上なら「・」でつないで届く。かっこの中の「・」（準備・片付け含）では切らない
+function _facProcs(l){
+  const out=[]; let cur='', d=0;
+  for(const c of String(l.process||'')){
+    if(c==='('||c==='（') d++;
+    if(c===')'||c==='）') d=Math.max(0,d-1);
+    if(c==='・'&&!d){ if(cur) out.push(cur); cur=''; } else cur+=c;
+  }
+  if(cur) out.push(cur);
+  return out;
+}
+// 号数で探すとき：その号数を作っている（数が入っている）ロットだけ当てる
+function _facGouKeys(l){ return (Array.isArray(l.gous)?l.gous:[]).filter(x=>x&&typeof x.n==='number'&&x.n>0).map(x=>_facNorm(x.g)); }
+// 検索：言葉ごとに「いまの工程」か「品番・品名・ロット番号・号数」のどれかに当たればよい。
+// 工程の名前は “いまの工程” だけを見る（工場PCと同じ決まり。先へ進んだロット・終わったロットは出さない）
+function _facHit(l,words){
+  if(!words.length) return true;
+  const cur=_facNorm(l.process), rest=_facNorm([l.name,l.code,l.no,l.lot_id].join(' ')), g=_facGouKeys(l);
+  return words.every(w=>cur.includes(w)||rest.includes(w)||g.includes(w));
+}
+function _facHow(l,words){ const cur=_facNorm(l.process); return words.length&&words.every(w=>cur.includes(w))?'proc':'name'; }
+function _facMd(s){ const p=String(s||'').slice(0,10).split('-'); return p.length===3&&p[1]&&p[2]?(+p[1])+'/'+(+p[2]):''; }
+function _facLate(l){ return !!(l.due&&l.eta&&String(l.eta).slice(0,10)>String(l.due).slice(0,10)); }
+function _facWorking(l){ return l.state==='作業中'; }
+// 待っている日数（waiting_since があるときだけ）。工場の情報の時点で数える
+function _facWaitDays(l){
+  if(_facWorking(l)) return null;
+  const m=String(l.waiting_since||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return null;
+  const base=(facSnap&&_facParseTime(facSnap.generated_at))||new Date();
+  const a=new Date(+m[1],+m[2]-1,+m[3]), b=new Date(base.getFullYear(),base.getMonth(),base.getDate());
+  const d=Math.round((b-a)/864e5);
+  return (isFinite(d)&&d>=0)?d:null;
+}
+// ようす：新しいデータは state_label（工場PCの「ようす」と同じ言い方）、古いデータは state
+function _facStateText(l){
+  const wd=_facWaitDays(l);
+  if(wd!=null) return wd===0?'今日から待ち':wd+'日待ち';
+  const s=(typeof l.state_label==='string')?l.state_label.trim():'';
+  return s||String(l.state||'');
+}
+function _facStBadge(l){ return '<span class="fx-st '+(_facWorking(l)?'work':'wait')+'">'+_facEsc(_facStateText(l))+'</span>'; }
+// 当たった文字に印（ゆれ吸収のため1文字ずつ照合）
+function _facHl(text,words){
+  const s=String(text==null?'':text); if(!words.length) return _facEsc(s);
+  const chars=Array.from(s), nch=chars.map(c=>_facNorm(c)), mk=new Array(chars.length).fill(false), joined=nch.join('');
+  words.forEach(w=>{ const i=joined.indexOf(w); if(i<0) return;
+    let pos=0; for(let j=0;j<chars.length;j++){ const len=nch[j].length; if(pos+len>i&&pos<i+w.length&&len) mk[j]=true; pos+=len; } });
+  for(let j=1;j<chars.length-1;j++) if(!nch[j].length&&mk[j-1]&&mk[j+1]) mk[j]=true;
+  let out='', on=false;
+  chars.forEach((c,j)=>{ if(mk[j]&&!on){out+='<mark>';on=true;} if(!mk[j]&&on){out+='</mark>';on=false;} out+=_facEsc(c); });
+  return out+(on?'</mark>':'');
+}
+const FAC_CDOT=[['マスカット','#a3c43a'],['オレンジ','#f97316'],['イエロー','#facc15'],['黄','#facc15'],['グリーン','#16a34a'],['緑','#16a34a'],
+  ['ピンク','#ec4899'],['ホワイト','#ffffff'],['白','#ffffff'],['レッド','#dc2626'],['赤','#dc2626'],['ブルー','#2563eb'],['青','#2563eb'],
+  ['ブラック','#1f2937'],['黒','#1f2937'],['パープル','#7c3aed'],['紫','#7c3aed'],['ゴールド','#d4a017'],['シルバー','#a8b0bc'],['クリア','#e8edf3']];
+function _facCdot(c){ const h=FAC_CDOT.find(x=>String(c||'').indexOf(x[0])>=0); return '<i class="fx-cdot" style="background:'+(h?h[1]:'#98a2b1')+'"></i>'; }
+// 号数の見出し：どこから来た数か（予定／実数／工場PCで直した数…）。予定・目安なら札を付ける。古いデータは今までどおり
+function _facGouHead(l){
+  const src=(typeof l.gou_src==='string')?l.gou_src:'', yt=l.gou_meyasu===true;
+  let h='号数ごとの数（'+_facUnit(l)+'）';
+  if(yt) h+='<span class="fx-tag">'+(src===''||src==='予定'?'予定':'目安')+'</span>';
+  if(src&&src!=='予定') h+='<span class="fx-src'+(yt?'':' ok')+'">'+_facEsc(src)+'</span>';
+  return h;
+}
+function _facGouNote(l){
+  if(l.gou_meyasu!==true) return '';
+  return '<div class="note">'+(!l.gou_src||l.gou_src==='予定'?'まだ工場で数えていない予定の数です。できあがりの数は変わることがあります。':'合計といまの数が合わないので目安です。')+'</div>';
+}
+
+function setFacCat(c){ facCat=c; facLimit=80; renderFactory(); }
+function toggleFacWork(){ facWork=!facWork; facLimit=80; renderFactory(); }
+function toggleFacPall(){ facPall=!facPall; renderFactory(); }
+function facPickProc(i){ const p=facProcList[i]; if(p==null) return; facProc=(facProc===p)?'':p; const q=document.getElementById('fac-search'); if(q) q.value=''; facLimit=80; renderFactory(); }
+function facOnSearch(){ facProc=''; facLimit=80; renderFactory(); }
+function facClearSearch(){ const q=document.getElementById('fac-search'); if(q){ q.value=''; } facProc=''; renderFactory(); if(q) q.focus(); }
+function facSortBy(k){ facSort=(facSort&&facSort.k===k)?{k:k,dir:-facSort.dir}:{k:k,dir:(k==='qty'||k==='pct')?-1:1}; renderFactory(); }
+function facToggleOpen(id){ facOpen=(facOpen===id)?null:id; renderFactory(); }
+function facMore(){ facLimit+=120; renderFactory(); }
+
+const FAC_COLS=[{k:'name',t:'品名・品番'},{k:'proc',t:'いまの工程'},{k:'state',t:'ようす'},{k:'qty',t:'数'},{k:'pct',t:'全体'},{k:'eta',t:'完成予想'}];
+function _facKey(l,k){
+  if(k==='name') return String(l.name||l.code||'');
+  if(k==='proc') return l.step_total?(+l.step_idx||0)/(+l.step_total):9;
+  if(k==='state') return _facWorking(l)?0:1;
+  if(k==='qty') return +l.qty||0;
+  if(k==='pct') return +l.pct||0;
+  const s=String(l.eta||''); return /^\d{4}-\d{2}-\d{2}/.test(s)?s.slice(0,10):'9999';
+}
+function _facSorted(L){
+  const a=L.slice(), id=x=>String(x.l.lot_id||x.l.no||x.i);
+  if(facSort){
+    const k=facSort.k, dir=facSort.dir;
+    a.sort((x,y)=>{ const p=_facKey(x.l,k), q=_facKey(y.l,k);
+      const c=(typeof p==='number'&&typeof q==='number')?p-q:String(p).localeCompare(String(q),'ja');
+      return c*dir || (x.i-y.i); });
+  }else{
+    // 作業中 → 完成が近い順（何も押していないとき）
+    a.sort((x,y)=>_facKey(x.l,'state')-_facKey(y.l,'state') || String(_facKey(x.l,'eta')).localeCompare(String(_facKey(y.l,'eta'))) || id(x).localeCompare(id(y)));
+  }
+  return a.map(o=>o.l);
+}
+function _facEtaCell(l){
+  const lab=String(l.eta_label||''), warn=!lab||/できません|上旬|中旬|下旬/.test(lab), late=_facLate(l);
+  return '<div class="fx-eta'+(warn?' w':'')+'">'+_facEsc(lab||'―')+(l.eta_note?'<small>'+_facEsc(l.eta_note)+'</small>':'')+'</div>'
+    +(l.due?'<span class="fx-due'+(late?' late':'')+'">納期 '+_facEsc(_facMd(l.due)||l.due)+(late?' 遅れ見込み':'')+'</span>':'');
+}
+function _facDetail(l){
+  const n=+l.step_total||0, i=+l.step_idx||0;
+  const bars=n?Array.from({length:Math.min(n,80)},(_,k)=>'<i class="'+(k+1<i?'d':k+1===i?'c':'')+'"></i>').join(''):'';
+  const gl=(Array.isArray(l.gous)?l.gous:[]).filter(Boolean);
+  const gous=(l.gou_split!==false&&gl.length)?'<div class="fx-gous">'+_facGouChips(gl,l.gou_meyasu===true)+'</div>'+_facGouNote(l):'<span class="fx-g none">号数はこれから分けます</span>';
+  const cols=(Array.isArray(l.colors)?l.colors:[]).filter(x=>x&&x.c);
+  const wd=_facWaitDays(l);
+  // 待ちで待ち始めの日が分かるときは「待ち　10/5から（15日）」（state_label の「待ち（10/5〜）」と二重にしない）
+  const lab=wd!=null?'待ち':((typeof l.state_label==='string'&&l.state_label.trim())?l.state_label.trim():String(l.state||''));
+  return '<div class="fx-det"><div class="fx-det-in">'
+    +'<div class="full"><div class="k">'+_facGouHead(l)+'</div>'+gous+'</div>'
+    +(cols.length?'<div class="full"><div class="k">色の内訳'+(l.color_src?'<span class="fx-src">'+_facEsc(l.color_src)+'</span>':'')+'</div><div class="fx-gous">'
+      +cols.map(x=>'<span class="fx-g col">'+_facCdot(x.c)+_facEsc(x.c)+'<b>'+_facNum(+x.n)+'</b></span>').join('')+'</div></div>':'')
+    +(n?'<div class="full"><div class="k">工程 '+_facEsc(i)+' / '+_facEsc(n)+'（緑＝済み・青＝いまここ）</div><div class="fx-steps">'+bars+'</div></div>':'')
+    +'<div><div class="k">ようす</div><div class="v">'+_facEsc(lab||'―')+(wd!=null?'　<span style="color:var(--fx-ink3)">'+_facEsc(_facMd(l.waiting_since))+'から（'+(wd===0?'今日':wd+'日')+'）</span>':'')+'</div></div>'
+    +'<div><div class="k">完成予想（幅）</div><div class="v">'+_facEsc(l.eta_label||'―')+(l.eta_from&&l.eta_to?'　<span style="color:var(--fx-ink3)">'+_facEsc(_facMd(l.eta_from))+'〜'+_facEsc(_facMd(l.eta_to))+'</span>':'')+'</div></div>'
+    +(l.due?'<div><div class="k">納期</div><div class="v">'+_facEsc(_facMd(l.due)||l.due)+(_facLate(l)?'　<b style="color:var(--fx-red)">間に合わない見込み</b>':'　間に合う見込み')+'</div></div>':'')
+    +'<div><div class="k">ロット番号</div><div class="v" style="font-family:var(--fx-mono);font-size:13px;word-break:break-all">'+_facEsc(l.no||l.lot_id||'')+'</div></div>'
+    +'</div></div>';
+}
+function _facSums(L,words,raw){
+  let h='';
+  if(facProc||(words.length&&L.length&&L.every(l=>_facHow(l,words)==='proc'))){
+    const name=facProc||raw, tot=L.reduce((s,l)=>s+(+l.qty||0),0), nw=L.filter(_facWorking).length;
+    h+='<div class="fx-sum"><div class="t">工程「<b>'+_facEsc(name)+'</b>」にいまいるロット <b>'+L.length+'</b>件・合計 <b>'+_facNum(tot)+'</b></div>'
+      +'<div class="s">うち作業中 '+nw+'件・待ち '+(L.length-nw)+'件。この工程を越えたロット・終わったロットは出しません。</div></div>';
+  }else if(words.length){
+    // 同じ品番のロットが2つ以上あれば、号数ごとの合計を1行で出す
+    const groups=[], by={};
+    L.forEach(l=>{ const k=l.code?'c:'+l.code:'n:'+(l.name||''); if(!by[k]){ by[k]={l:l,lots:[]}; groups.push(by[k]); } by[k].lots.push(l); });
+    groups.filter(g=>g.lots.length>=2).slice(0,4).forEach(g=>{
+      let total=0, before=0, yt=false; const order=[], sum={};
+      g.lots.forEach(l=>{
+        total+=(+l.qty||0);
+        if(l.gou_split===false||!Array.isArray(l.gous)||!l.gous.length){ before+=(+l.qty||0); return; }
+        if(l.gou_meyasu===true) yt=true;
+        l.gous.forEach(x=>{ if(!x) return; const k=String(x.g); if(!(k in sum)){ sum[k]=null; order.push(k); } if(typeof x.n==='number'&&isFinite(x.n)) sum[k]=(sum[k]||0)+x.n; });
+      });
+      const u=_facUnit(g.l);
+      h+='<div class="fx-sum"><div class="t"><b>'+_facEsc(g.l.name||g.l.code)+'</b>　'+g.lots.length+'ロット合計 <b>'+_facNum(total)+u+'</b>'
+        +(before?'<span class="s">（うち号数分け前 '+_facNum(before)+u+'）</span>':'')
+        +(yt?'<span class="fx-tag">予定の数を含む</span>':'')+'</div>'
+        +(order.length?'<div class="fx-gous">'+_facGouChips(order.map(k=>({g:k,n:sum[k]})),yt)+'</div>':'')+'</div>';
+    });
+  }
+  return h;
 }
 
 function renderFactory(){
   renderFactoryHead();
   const catsEl=document.getElementById('fac-cats'), listEl=document.getElementById('fac-list'), cntEl=document.getElementById('fac-count');
   if(!catsEl||!listEl) return;
-  const lots=(facSnap&&Array.isArray(facSnap.lots))?facSnap.lots.filter(l=>l&&typeof l==='object'):[];
-  // カテゴリ（すべて／円錐ウキ／棒ウキ／ルアー／その他は届いた cat_label の順）
+  const hdEl=document.getElementById('fac-hd'), pwEl=document.getElementById('fac-pwrap'), sumEl=document.getElementById('fac-sums');
+  const pcEl=document.getElementById('fac-pchips'), pmEl=document.getElementById('fac-pmore'), qbEl=document.getElementById('fac-qbox');
+  const lots=(facSnap&&Array.isArray(facSnap.lots))?facSnap.lots.filter(l=>l&&typeof l==='object'&&!l.demo):[];
+  // 区分（全部／円錐ウキ／棒ウキ／ルアー／そのほかは届いた cat_label の順）
   const counts={}; const extra=[];
   lots.forEach(l=>{ const c=_facCatOf(l); counts[c]=(counts[c]||0)+1; if(!FAC_FIXED_CATS.some(f=>f[0]===c)&&!extra.some(e=>e[0]===c)) extra.push([c,_facLabelOf(l)]); });
-  const cats=[['all','すべて']].concat(FAC_FIXED_CATS,extra);
+  const cats=[['all','全部']].concat(FAC_FIXED_CATS,extra);
   if(!cats.some(c=>c[0]===facCat)) facCat='all';
   facCatList=cats.map(c=>c[0]);
   catsEl.innerHTML=cats.map((c,i)=>{
     const n=c[0]==='all'?lots.length:(counts[c[0]]||0);
-    return '<button class="fac-cat'+(facCat===c[0]?' on':'')+'" onclick="setFacCat(facCatList['+i+'])">'+_facEsc(c[1])+'<b>'+n+'</b></button>';
-  }).join('')+'<button class="fac-cat sort'+(facSortEta?' on':'')+'" onclick="toggleFacSort()">'+(facSortEta?'✓ ':'')+'完成が近い順</button>';
+    return '<button class="fx-chip'+(facCat===c[0]?' on':'')+'" type="button" onclick="setFacCat(facCatList['+i+'])">'+_facEsc(c[1])+'<b>'+n+'</b></button>';
+  }).join('');
+  const wbtn=document.getElementById('fac-working'); if(wbtn) wbtn.classList.toggle('on',facWork);
+
+  const base=lots.map((l,i)=>({l:l,i:i})).filter(o=>facCat==='all'||_facCatOf(o.l)===facCat);
+  // いまの工程のチップ（作業中のある工程 → ロットの多い工程の順）
+  const pm={}, pw={};
+  base.forEach(o=>_facProcs(o.l).forEach(p=>{ pm[p]=(pm[p]||0)+1; if(_facWorking(o.l)) pw[p]=1; }));
+  facProcList=Object.keys(pm).sort((a,b)=>(pw[b]||0)-(pw[a]||0)||pm[b]-pm[a]||a.localeCompare(b,'ja'));
+  if(facProc&&!pm[facProc]) facProc='';
+  if(pcEl) pcEl.innerHTML=facProcList.map((p,i)=>'<button class="fx-pc'+(facProc===p?' on':'')+'" type="button" title="'+_facEsc(p)+'" onclick="facPickProc('+i+')">'+(pw[p]?'<i class="w"></i>':'')+_facEsc(p)+'<b>'+pm[p]+'</b></button>').join('');
+  if(pcEl) pcEl.classList.toggle('all',facPall);
+  if(pmEl) pmEl.textContent=facPall?'たたむ':'全部見る（'+facProcList.length+'）';
+  if(pwEl) pwEl.style.display=lots.length?'':'none';
 
   const qEl=document.getElementById('fac-search');
-  const q=_facNorm(qEl?qEl.value:'');
-  let view=lots.map((l,i)=>({l,i})).filter(o=>facCat==='all'||_facCatOf(o.l)===facCat);
-  if(q) view=view.filter(o=>_facNorm(o.l.code).includes(q)||_facNorm(o.l.name).includes(q));
-  if(facSortEta){
-    const key=l=>{ const s=String(l.eta||l.eta_from||l.eta_to||''); return /^\d{4}-\d{2}-\d{2}/.test(s)?s.slice(0,10):'9999-99-99'; };
-    view.sort((a,b)=>{ const ka=key(a.l),kb=key(b.l); if(ka!==kb) return ka<kb?-1:1; const pa=+a.l.pct||0,pb=+b.l.pct||0; if(pa!==pb) return pb-pa; return a.i-b.i; });
-  }
-  if(cntEl) cntEl.textContent=lots.length?(view.length+' ロット'+(q?'（「'+(qEl.value||'').trim()+'」でさがした結果）':'')):'';
+  const raw=qEl?String(qEl.value||'').trim():'';
+  const words=raw.split(/\s+/).map(_facNorm).filter(Boolean);
+  if(qbEl) qbEl.classList.toggle('has',!!raw);
+  const view=base.filter(o=>(!facWork||_facWorking(o.l))&&(!facProc||_facProcs(o.l).indexOf(facProc)>=0)&&_facHit(o.l,words));
+  const L=view.map(o=>o.l);
 
   if(!lots.length){
-    listEl.innerHTML='<div class="fac-empty">'+(facLoading?'読み込み中…':(facError?_facEsc(facError):'表示できるロットがありません'))+'</div>';
+    if(cntEl) cntEl.textContent='';
+    if(sumEl) sumEl.innerHTML='';
+    if(hdEl) hdEl.style.display='none';
+    listEl.innerHTML='<div class="fx-empty">'+(facLoading?'読み込み中…':(facError?_facEsc(facError):'表示できるロットがありません'))+'</div>';
     return;
   }
-  let html='';
-  // さがしている時だけ：同じ品番のロットが2つ以上あれば、号数ごとの合計を1行で出す
-  if(q){
-    const groups=[]; const byKey={};
-    view.forEach(o=>{ const l=o.l; const k=(l.code?'c:'+l.code:'n:'+(l.name||'')); if(!byKey[k]){ byKey[k]={l,lots:[]}; groups.push(byKey[k]); } byKey[k].lots.push(l); });
-    groups.filter(g=>g.lots.length>=2).slice(0,6).forEach(g=>{
-      let total=0, before=0; const order=[]; const sum={};
-      g.lots.forEach(l=>{
-        total+=(+l.qty||0);
-        if(l.gou_split===false||!Array.isArray(l.gous)||!l.gous.length){ before+=(+l.qty||0); return; }
-        l.gous.forEach(x=>{ if(!x) return; const k=String(x.g); if(!(k in sum)){ sum[k]=null; order.push(k); } if(typeof x.n==='number'&&isFinite(x.n)) sum[k]=(sum[k]||0)+x.n; });
-      });
-      const u=_facUnit(g.l);
-      html+='<div class="fac-sum"><div class="fac-sum-t">📦 <b>'+_facEsc(g.l.name||g.l.code)+'</b>　'+g.lots.length+'ロット合計 <b>'+_facNum(total)+u+'</b>'+(before?'<span style="color:var(--text2)">（うち号数分け前 '+_facNum(before)+u+'）</span>':'')+'</div>'
-        +(order.length?'<div class="fac-gous">'+_facGouChips(order.map(k=>({g:k,n:sum[k]})))+'</div>':'')+'</div>';
-    });
-  }
-  if(!view.length){
-    html+='<div class="fac-empty">見つかりませんでした</div>';
-  }
-  view.forEach(o=>{
-    const l=o.l;
-    const pct=Math.max(0,Math.min(100,+l.pct||0));
-    const label=String(l.eta_label||'');
-    const etaWarn=!!l.eta_note||!label||/できません|上旬|中旬|下旬/.test(label);
-    const etaTxt=label?(/できません/.test(label)?label:'完成予想 '+label):'完成予想 ―';
-    const sub=[l.code, (l.no&&l.no!==l.code)?l.no:''].filter(Boolean).join(' · ');
-    let gous;
-    if(l.gou_split===false||!Array.isArray(l.gous)||!l.gous.length) gous='<span class="fac-g none">号数はこれから分けます</span>';
-    else gous=_facGouChips(l.gous.filter(Boolean));
-    const step=(l.step_idx!=null&&l.step_total)?'<span class="n">'+_facEsc(l.step_idx)+' / '+_facEsc(l.step_total)+' 工程</span>':'';
-    html+='<div class="fac-lot">'
-      +'<div class="fac-r1"><span class="fac-name">'+_facEsc(l.name||l.code||'（品名なし）')+(l.demo?'<span class="fac-demo">試作</span>':'')+'<span class="fac-qty">'+_facNum(+l.qty)+_facUnit(l)+'</span>'+(sub?'<span class="fac-sub">'+_facEsc(sub)+'</span>':'')+'</span>'
-      +'<span class="fac-eta'+(etaWarn?' w':'')+'">'+_facEsc(etaTxt)+(l.eta_note?'<small>'+_facEsc(l.eta_note)+'</small>':'')+'</span></div>'
-      +'<div class="fac-step">いま：<b>'+_facEsc(l.process||'―')+'</b>'+(l.state?'（'+_facEsc(l.state)+'）':'')+step+'</div>'
-      +'<div class="fac-bar"><i style="width:'+pct+'%"></i></div>'
-      +'<div class="fac-gous">'+gous+'</div>'
-      +'</div>';
-  });
+  if(hdEl) hdEl.style.display='';
+  const nw=lots.filter(_facWorking).length;
+  const np=words.length?L.filter(l=>_facHow(l,words)==='proc').length:0;
+  if(cntEl) cntEl.innerHTML='流れているロット '+lots.length+'件（いま作業中 '+nw+'件）　表示 <b>'+L.length+'</b>件'
+    +(words.length?'（工程で当たった '+np+'・品番/品名/号数で当たった '+(L.length-np)+'）':'')+'　・見出しで並べ替え・行を押すと号数と工程';
+  if(sumEl) sumEl.innerHTML=_facSums(L,words,raw);
+  if(hdEl) hdEl.innerHTML=FAC_COLS.map(c=>{ const on=facSort&&facSort.k===c.k;
+    return '<span class="'+(on?'on':'')+'"'+(c.k==='qty'?' style="text-align:right"':'')+' onclick="facSortBy(\''+c.k+'\')">'+c.t+'<span class="ar">'+(on?(facSort.dir>0?'▲':'▼'):'▲▼')+'</span></span>'; }).join('');
+  const A=_facSorted(view);
+  let html=A.slice(0,facLimit).map(l=>{
+    const pct=Math.max(0,Math.min(100,+l.pct||0)), id=String(l.lot_id||l.no||''), open=facOpen!=null&&facOpen===id;
+    const sub=[l.code,_facLabelOf(l)].filter(Boolean).join(' · ');
+    const step=(l.step_idx!=null&&l.step_total)?_facEsc(l.step_idx)+' / '+_facEsc(l.step_total)+' 工程':'';
+    return '<div class="fx-row r'+(open?' open':'')+'" data-id="'+_facEsc(id)+'" onclick="facToggleOpen(this.dataset.id)">'
+      +'<div class="fx-nm"><b>'+_facHl(l.name||l.code||'（品名なし）',words)+'</b><span class="code">'+_facHl(sub,words)+'</span></div>'
+      +'<div class="fx-pr">'+_facHl(l.process||'―',words)+'<span class="fx-stm">'+_facStBadge(l)+'</span>'+(step?'<span class="si">'+step+'</span>':'')+'</div>'
+      +'<div class="fx-stc">'+_facStBadge(l)+'</div>'
+      +'<div class="fx-qty">'+_facNum(+l.qty)+'<small>'+_facUnit(l)+'</small></div>'
+      +'<div class="fx-pb"><div class="fx-pbar"><i style="width:'+pct+'%"></i></div><span class="n">'+pct+'%</span></div>'
+      +'<div class="fx-ec">'+_facEtaCell(l)+'</div></div>'+(open?_facDetail(l):'');
+  }).join('') || '<div class="fx-empty">見つかりません。言葉を短くするか、「全部」に戻してください。</div>';
+  if(A.length>facLimit) html+='<button class="fx-more" type="button" onclick="facMore()">あと '+(A.length-facLimit)+'件を出す</button>';
   listEl.innerHTML=html;
 }
 </script>
