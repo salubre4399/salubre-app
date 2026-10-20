@@ -228,6 +228,48 @@ svg{display:inline-block;vertical-align:middle}
   .tight-row{flex-wrap:wrap}
   .tight-row>button,.tight-row>input{flex:1 1 47%!important;min-width:0}
 }
+/* ══ 🏭 工場の進み具合（2026-10-15 追加）══
+   工場サーバー → GAS（工場進捗シート）に10分おきに届くスナップショットを見るだけの画面。送信はしない。 */
+.fac-head{display:flex;align-items:center;gap:10px;padding:12px 14px 0}
+.fac-time{flex:1;min-width:0;font-size:16px;font-weight:700;color:var(--text)}
+.fac-time small{display:block;font-size:13px;font-weight:400;color:var(--text3)}
+.fac-refresh{height:40px;padding:0 14px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;flex-shrink:0}
+.fac-refresh:disabled{opacity:.5}
+.fac-alert{margin:8px 14px 0;padding:8px 12px;border-radius:var(--rs);font-size:15px;line-height:1.5}
+.fac-alert.warn{background:var(--warn-light);color:var(--warn);border:1px solid #f0d2ad}
+.fac-alert.err{background:var(--danger-light);color:var(--danger);border:1px solid #f1c4bf}
+.fac-cats{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0}
+.fac-cat{height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:15px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap}
+.fac-cat b{margin-left:4px;font-family:'DM Mono',monospace;font-weight:500}
+.fac-cat.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fac-cat.sort.on{background:var(--success);border-color:var(--success)}
+.fac-search{display:block;width:calc(100% - 28px);margin:10px 14px 0;height:44px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:17px;font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--text);outline:none}
+.fac-search:focus{border-color:var(--accent)}
+.fac-count{padding:8px 14px 0;font-size:13px;color:var(--text3)}
+.fac-list{display:flex;flex-direction:column;gap:10px;padding:8px 14px 14px}
+.fac-lot{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.fac-r1{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between}
+.fac-name{font-size:18px;font-weight:700;color:var(--text);min-width:0;overflow-wrap:anywhere}
+.fac-demo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--warn-light);color:var(--warn);border:1px solid #f0d2ad;font-size:12px;font-weight:700;vertical-align:2px}
+.fac-sub{font-size:12px;color:var(--text3);font-weight:400;margin-left:8px;font-family:'DM Mono',monospace;white-space:nowrap;display:inline-block}
+.fac-qty{font-size:16px;font-weight:500;color:var(--text2);white-space:nowrap;margin-left:10px}
+.fac-eta{font-size:15px;font-weight:700;color:var(--success)}
+.fac-eta.w{color:var(--warn)}
+.fac-eta small{font-weight:400;color:var(--text3);font-size:12px;margin-left:4px}
+.fac-step{font-size:15px;color:var(--text)}
+.fac-step b{color:var(--accent)}
+.fac-step .n{color:var(--text2);margin-left:8px;white-space:nowrap}
+.fac-bar{height:10px;border-radius:6px;background:var(--surface2);overflow:hidden}
+.fac-bar i{display:block;height:100%;background:var(--accent)}
+.fac-gous{display:flex;flex-wrap:wrap;gap:6px}
+.fac-g{background:var(--accent-light);border-radius:8px;padding:4px 9px;font-size:14px;color:var(--accent-dark);font-variant-numeric:tabular-nums}
+.fac-g b{margin-left:4px}
+.fac-g.z{opacity:.4}
+.fac-g.none{background:var(--surface2);color:var(--text2)}
+.fac-sum{background:var(--accent-light);border:1px solid #bcd6ea;border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.fac-sum-t{font-size:15px;color:var(--accent-dark)}
+.fac-sum .fac-g{background:var(--surface)}
+.fac-empty{padding:30px 14px;text-align:center;color:var(--text3);font-size:16px}
 @media print{
   body>.wrap{display:none!important}
   #print-overlay{position:static!important;display:block!important;overflow:visible!important}
@@ -393,7 +435,7 @@ svg{display:inline-block;vertical-align:middle}
     <div class="tight-row" style="display:flex;gap:6px;margin:0 14px 8px">
       <button onclick="fetchPrevStockFromCloud()" style="flex:1;min-width:0;height:40px;padding:0 2px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 前回取得</button>
       <select id="history-pick" onchange="onHistoryPick(this)" style="flex:1;min-width:0;height:40px;padding:0 2px;background:none;border:1px solid var(--success);color:var(--success);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif"><option value="">📅 いまの入力</option></select>
-      <button onclick="syncToCloud()" style="flex:1;min-width:0;height:40px;padding:0 2px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 保存</button>
+      <button onclick="syncToCloud(true)" style="flex:1;min-width:0;height:40px;padding:0 2px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">☁ 保存</button>
     </div>
     <div id="stock-last-check" style="font-size:13px;color:var(--text3);text-align:right;margin:-4px 14px 6px"></div>
     <div id="stock-photos-wrap" style="margin:0 14px 10px">
@@ -615,6 +657,7 @@ svg{display:inline-block;vertical-align:middle}
     <div class="field-row"><span class="field-label">送信先メール</span><input type="email" id="cfg-to-email" placeholder="info@sal-u-bre.com"></div>
     <div class="field-row"><span class="field-label">追加送信先</span><input type="email" id="cfg-to-email2" placeholder="受注入力用アドレス（任意）"></div>
     <div class="field-row"><span class="field-label">担当者名</span><input type="text" id="cfg-my-name" placeholder="吉田"></div>
+    <div class="field-row"><span class="field-label">合言葉</span><input type="text" id="cfg-cloud-key" placeholder="クラウドの合言葉（会社から伝えます）" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   </div>
   <div class="settings-section-title" style="margin-top:8px">📄 PDF添付メール設定（GAS）</div>
   <div class="card" style="margin:0 14px 6px">
@@ -634,8 +677,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-A（クラウド同期が止まっていたのを直しました）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20）: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-B（工場の進み具合・下書きの共有・クラウドの合言葉）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-B」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20-B）: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -647,7 +690,7 @@ svg{display:inline-block;vertical-align:middle}
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
       <div style="font-size:16px;color:var(--text2);line-height:1.7;margin-bottom:10px">端末内のデータ（注文履歴・在庫・店舗・帳合先・設定・写真）をファイルに書き出せます。機種変更時の移行、事務への共有、バックアップにお使いください。<br>iPhoneでは「ファイルに保存」「メールで送信」などの共有メニューが開きます。</div>
-      <div class="btn-full"><button id="sync-btn" class="btn btn-primary" onclick="syncToCloud()">☁ Googleスプレッドシートに同期</button></div>
+      <div class="btn-full"><button id="sync-btn" class="btn btn-primary" onclick="syncToCloud(true)">☁ Googleスプレッドシートに同期</button></div>
       <div style="text-align:center;font-size:13px;color:var(--text3);margin:-4px 0 8px" id="sync-last-label">未同期</div>
       <div class="btn-full"><button id="fetch-masters-btn" class="btn btn-outline" onclick="fetchSharedMasters()">☁ 共有データを取得（店舗・チェーン・問屋・陳列設定・カラー比率）</button></div>
       <div class="btn-full"><button class="btn btn-primary" onclick="exportAllCSV()" style="background:#1a7a4a">📊 全データをCSVで書き出す（注文＋在庫）</button></div>
@@ -717,6 +760,19 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
+<!-- FACTORY（🏭 工場の進み具合：見るだけ。2026-10-15 追加） -->
+<div class="screen" id="screen-factory">
+  <div class="fac-head">
+    <div class="fac-time" id="fac-time">まだ読み込んでいません</div>
+    <button class="fac-refresh" id="fac-refresh" onclick="loadFactory()">↻ 最新にする</button>
+  </div>
+  <div id="fac-alerts"></div>
+  <div class="fac-cats" id="fac-cats"></div>
+  <input type="search" class="fac-search" id="fac-search" placeholder="🔍 品番・品名でさがす（例：VFファング、SA-350）" oninput="renderFactory()" autocomplete="off">
+  <div class="fac-count" id="fac-count"></div>
+  <div class="fac-list" id="fac-list"></div>
+</div>
+
 <!-- Tabbar -->
 <div class="tabbar">
   <div class="tab active" id="tab-order" onclick="goScreen('order')">
@@ -728,6 +784,9 @@ svg{display:inline-block;vertical-align:middle}
   <div class="tab" id="tab-oos" onclick="goScreen('oos')">
     <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>在庫
     <div class="tab-dot"></div>
+  </div>
+  <div class="tab" id="tab-factory" onclick="goScreen('factory')">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 21h20"/><path d="M3 21V10l5 3V10l5 3V10l5 3V4h3v17"/><line x1="7" y1="17" x2="9" y2="17"/><line x1="12" y1="17" x2="14" y2="17"/></svg>工場
   </div>
   <div class="tab" id="tab-settings" onclick="goScreen('settings')">
     <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>設定
@@ -1084,7 +1143,21 @@ function saveOOS(){ localStorage.setItem('salubre_oos', JSON.stringify(OOS_DATA)
 
 let products=[],nextId=1,currentColorTarget=null,codeReader=null,allCollapsed=false;
 let history=JSON.parse(localStorage.getItem('salubre_h')||'[]');
-let cfg={toEmail:'',toEmail2:'',myName:'吉田',serviceId:'',templateId:'',publicKey:'',gasUrl:''};
+let cfg={toEmail:'',toEmail2:'',myName:'吉田',serviceId:'',templateId:'',publicKey:'',gasUrl:'',cloudKey:''};
+/* ══ クラウドの合言葉（2026-10-20）══
+   公開リポジトリなので合言葉はコードに書かない。設定タブで各端末に入れてもらい cfg.cloudKey（localStorage）に置く。
+   CLOUD_WEBHOOK への送信・読み出しと工場タブの読み出しにすべて付ける。空なら送らない。 */
+function cloudKey(){ return String(cfg.cloudKey||'').trim(); }
+let _cloudKeyWarned=false, _cloudBadKeyWarned=false;
+// 合言葉が無ければ true（＝送らない）。mode: 'manual'＝毎回知らせる／'auto'＝1回だけ知らせる／'silent'＝黙って止める
+function needCloudKey(mode){
+  if(cloudKey()) return false;
+  if(mode==='manual'||(mode==='auto'&&!_cloudKeyWarned)){ _cloudKeyWarned=true; showToast('設定でクラウドの合言葉を入れてください'); }
+  return true;
+}
+function cloudGetUrl(action,user){ return CLOUD_WEBHOOK+'?action='+action+'&key='+encodeURIComponent(cloudKey())+(user?'&user='+encodeURIComponent(user):''); }
+function cloudBadKey(json){ return !!(json&&json.ok===false&&json.error==='bad key'); }
+const CLOUD_BADKEY_MSG='合言葉がちがいます（設定タブの「合言葉」を確認してください）';
 function toAddrs(){return [cfg.toEmail,cfg.toEmail2].map(x=>(x||'').trim()).filter(Boolean).join(',');}
 
 function loadCfg(){
@@ -1093,6 +1166,7 @@ function loadCfg(){
   document.getElementById('cfg-to-email').value=cfg.toEmail||'';
   document.getElementById('cfg-to-email2').value=cfg.toEmail2||'';
   document.getElementById('cfg-my-name').value=cfg.myName||'';
+  document.getElementById('cfg-cloud-key').value=cfg.cloudKey||'';
   document.getElementById('cfg-gas-url').value=cfg.gasUrl||'';
   document.getElementById('cfg-service-id').value=cfg.serviceId||'';
   document.getElementById('cfg-template-id').value=cfg.templateId||'';
@@ -1104,6 +1178,8 @@ function saveSettings(){
   cfg.toEmail=document.getElementById('cfg-to-email').value.trim();
   cfg.toEmail2=document.getElementById('cfg-to-email2').value.trim();
   cfg.myName=document.getElementById('cfg-my-name').value.trim()||'吉田';
+  cfg.cloudKey=document.getElementById('cfg-cloud-key').value.trim();
+  _cloudKeyWarned=false; _cloudBadKeyWarned=false;
   cfg.gasUrl=document.getElementById('cfg-gas-url').value.trim();
   cfg.serviceId=document.getElementById('cfg-service-id').value.trim();
   cfg.templateId=document.getElementById('cfg-template-id').value.trim();
@@ -1259,7 +1335,7 @@ function goScreen(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  const titles={order:'新規注文',history:'送信履歴',oos:'在庫・品切れ',settings:'設定'};
+  const titles={order:'新規注文',history:'送信履歴',oos:'在庫・品切れ',settings:'設定',factory:'🏭 工場の進み具合'};
   document.getElementById('nav-title').textContent=titles[name]||'';
   if(name==='order'){
     // 在庫タブで選択中の店舗を注文タブへ引き継ぐ（空欄、または前に自動入力した店舗名のままの時のみ）
@@ -1276,6 +1352,7 @@ function goScreen(name){
   if(name==='oos'){initStockChainSel();initStockStoreSel('');if(currentStoreId!==null)renderStockList();}
   if(name==='settings'){renderStoreEdit();renderChainPrefixEdit();initStoreChainSel();renderTonyaEdit();updateSyncLabel();}
   if(name==='oos')renderOOS();
+  if(name==='factory'&&typeof openFactoryScreen==='function')openFactoryScreen();
   if(typeof updateStoreIndicator==='function')updateStoreIndicator();
   if(name==='order'&&typeof updateOrderTopSummary==='function')updateOrderTopSummary();
 }
@@ -1556,8 +1633,8 @@ function _writeDrafts(arr,ts){ localStorage.setItem('salubre_order_drafts',JSON.
 function saveOrderDraftsArr(a){ _writeDrafts(a, Date.now()); pushDrafts(); }
 // クラウドへ下書きを退避（担当者名でキー分け。no-corsなので送りっぱなし＝失敗しても既存動作に影響なし）
 function pushDrafts(){
-  const user=(cfg.myName||'').trim(); if(!user) return;
-  try{ fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_drafts',user:user,updatedAt:_draftsTs(),drafts:getOrderDrafts().slice(0,20)})}).catch(()=>{}); }catch(e){}
+  const user=(cfg.myName||'').trim(); if(!user||needCloudKey('silent')) return;
+  try{ fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_drafts',user:user,updatedAt:_draftsTs(),drafts:getOrderDrafts().slice(0,20)})}).catch(()=>{}); }catch(e){}
 }
 // get_data の json.drafts から自分の下書きを取り込む（クラウドが新しければ置換＝最後に編集した端末を優先）
 function applyCloudDrafts(json){
@@ -1570,8 +1647,11 @@ function applyCloudDrafts(json){
 }
 // 起動時：自分の下書きだけクラウドから取得（軽量。担当者名が無ければ何もしない）
 function pullDraftsOnLoad(){
-  const user=(cfg.myName||'').trim(); if(!user) return;
-  try{ fetch(CLOUD_WEBHOOK+'?action=get_data').then(r=>r.json()).then(applyCloudDrafts).catch(()=>{}); }catch(e){}
+  const user=(cfg.myName||'').trim(); if(!user||needCloudKey('silent')) return;
+  try{ fetch(cloudGetUrl('get_data',user)).then(r=>r.json()).then(json=>{
+    if(cloudBadKey(json)){ if(!_cloudBadKeyWarned){ _cloudBadKeyWarned=true; showToast(CLOUD_BADKEY_MSG); } return; }
+    applyCloudDrafts(json);
+  }).catch(()=>{}); }catch(e){}
 }
 function _orderSnapshot(){
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
@@ -3696,9 +3776,10 @@ function updateSyncLabel(){
   const t=localStorage.getItem('salubre_last_sync');
   el.textContent=t?'最終同期: '+t:'未同期';
 }
-async function syncToCloud(){
+async function syncToCloud(manual){
   const user=(cfg.myName||'').trim();
   if(!user){showToast('設定タブで「担当者名」を入力してから同期してください');return;}
+  if(needCloudKey(manual===true?'manual':'auto')) return;
   const btn=document.getElementById('sync-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ 同期中...';}
   showToast('☁ Googleスプレッドシートに同期中...');
@@ -3762,18 +3843,18 @@ async function syncToCloud(){
       ratioMasters.push({brand:brand,store:sname,storeRatio:hasSr?sr:{},prodRatio:hasPr?pr:{}});
     });
   });
-  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_orders',user:user,orders:orderRows})}).catch(()=>{});
-  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_stock',user:user,rows:stockRows})}).catch(()=>{});
+  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_orders',user:user,orders:orderRows})}).catch(()=>{});
+  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_stock',user:user,rows:stockRows})}).catch(()=>{});
   /* 在庫履歴（3世代）も送る（2026-09-05 追加）。
      従来は履歴が端末のlocalStorageにしか無く、タブレットで記録してPCで取得しても
      「前回の内容」が見られなかった。GAS側の sync_stock_history が受ける。 */
   const historyRows=buildStockHistoryRows();
   if(historyRows.length){
-    fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_stock_history',user:user,rows:historyRows})}).catch(()=>{});
+    fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_stock_history',user:user,rows:historyRows})}).catch(()=>{});
   }
-  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_capacity',user:user,rows:capacityRows})}).catch(()=>{});
+  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_capacity',user:user,rows:capacityRows})}).catch(()=>{});
   // 店舗・チェーン・問屋・陳列設定(棚情報)・カラー比率 マスタも共有（GAS側で sync_masters を処理・get_data で返す必要あり）
-  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'sync_masters',user:user,stores:STORE_LIST,chains:CHAIN_PREFIXES,tonya:TONYA_LIST,capacity:capacityMasters,ratios:ratioMasters})}).catch(()=>{});
+  fetch(CLOUD_WEBHOOK,{method:'POST',mode:'no-cors',body:JSON.stringify({key:cloudKey(),action:'sync_masters',user:user,stores:STORE_LIST,chains:CHAIN_PREFIXES,tonya:TONYA_LIST,capacity:capacityMasters,ratios:ratioMasters})}).catch(()=>{});
   const now=new Date().toLocaleString('ja-JP');
   localStorage.setItem('salubre_last_sync',now);
   updateSyncLabel();
@@ -3782,12 +3863,14 @@ async function syncToCloud(){
 }
 // 共有データ（店舗・チェーン・問屋）をクラウドから取得してローカルへ統合
 async function fetchSharedMasters(){
+  if(needCloudKey('manual')) return;
   const btn=document.getElementById('fetch-masters-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ 取得中...';}
   showToast('☁ 共有データ（店舗・チェーン・問屋・陳列設定）を取得中...');
   try{
-    const res=await fetch(CLOUD_WEBHOOK+'?action=get_data');
+    const res=await fetch(cloudGetUrl('get_data',(cfg.myName||'').trim()));
     const json=await res.json();
+    if(json&&json.ok===false) throw new Error(json.error||'ng');   // bad key／busy（混み合い）
     let added=0;
     if(Array.isArray(json.stores)){
       json.stores.forEach(s=>{const nm=(typeof s==='string')?s:(s&&s.name);if(nm&&!STORE_LIST.includes(nm)){STORE_LIST.push(nm);added++;}});
@@ -3853,7 +3936,7 @@ async function fetchSharedMasters(){
     try{initStockStoreSel('');}catch(e){}
     showToast(added?('✓ 共有データを '+added+' 件取り込みました'):'新しい共有データはありませんでした');
   }catch(e){
-    showToast('取得できませんでした（クラウド未対応の可能性）');
+    showToast(e&&e.message==='bad key'?CLOUD_BADKEY_MSG:'取得できませんでした（クラウド未対応の可能性）');
   }
   if(btn){btn.disabled=false;btn.textContent='☁ 共有データを取得（店舗・チェーン・問屋・陳列設定・カラー比率）';}
 }
@@ -4438,10 +4521,12 @@ async function fetchPrevStockFromCloud(){
   if(currentStoreId===null){showToast('店舗を選択してください');return;}
   const storeName=STORE_LIST[parseInt(currentStoreId)];
   const brandLabel=currentBrand==='grex'?'GREX':'ソルブレ';
+  if(needCloudKey('manual')) return;
   showToast('☁ クラウドからデータを取得中...');
   try{
-    const res=await fetch(CLOUD_WEBHOOK+'?action=get_data');
+    const res=await fetch(cloudGetUrl('get_data',(cfg.myName||'').trim()));
     const json=await res.json();
+    if(json&&json.ok===false) throw new Error(json.error||'ng');   // bad key／busy（混み合い）
     let capApplied=false;
     const capRows=(json.capacity||[]).slice(1);
     const capRow=capRows.find(r=>String(r[1])===storeName&&String(r[0])===brandLabel);
@@ -4529,7 +4614,7 @@ async function fetchPrevStockFromCloud(){
     showToast('✓ '+cnt+'商品の前回データを読み込みました'+(latestDate?'（'+latestDate+'）':'')
       +(hn?'／履歴'+hn+'世代':''));
   }catch(e){
-    showToast('取得エラー: '+e.message);
+    showToast(e&&e.message==='bad key'?CLOUD_BADKEY_MSG:'取得エラー: '+e.message);
   }
 }
 function restoreSnapshotByIndex(idx){
@@ -5732,6 +5817,171 @@ function migrateOOOtoZero(){
 // 陳列アプリと商品カタログを共有（同一端末・ブラウザのlocalStorage経由）
 function saveCatalogForPlanner(){try{localStorage.setItem('salubre_catalog_v1',JSON.stringify(PRODUCTS_DB));}catch(e){}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{saveCatalogForPlanner();migrateOOOtoZero();kpInit();initScrollLock();updateDraftBtn();updateStoreIndicator();});else {saveCatalogForPlanner();migrateOOOtoZero();kpInit();initScrollLock();updateDraftBtn();updateStoreIndicator();}
+/* ══ 🏭 工場の進み具合（2026-10-15 追加）══
+   GET FACTORY_URL?action=get_factory&key=合言葉（注文用の CLOUD_WEBHOOK と同じ1本の GAS） → {ok, generated_at, json:"<文字列>"}。json を JSON.parse して表示するだけ。
+   クラウドへは何も送らない（syncToCloud とは無関係）。最後に取れた中身は端末に残し、開いた瞬間・圏外でも見られるようにする。 */
+const FACTORY_URL='https://script.google.com/macros/s/AKfycbwpgA72jDaW4TCvaCO2WY5T7VnGFQhhUtV4OgBKN5b7-SRDUA_9VM9oCJHAgNL_OG9N/exec';   // 受け口を1本にまとめたので CLOUD_WEBHOOK と同じURL（2026-10-20）
+const FAC_CACHE_KEY='salubre_factory_snapshot_v1';
+const FAC_FIXED_CATS=[['ensui_uki','円錐ウキ'],['bou_uki','棒ウキ'],['lure','ルアー']];
+let facSnap=null;          // {generated_at, lots:[...]}
+let facCat='all';
+let facCatList=['all'];
+let facSortEta=false;      // false＝届いた順のまま／true＝完成が近い順
+let facLoading=false;
+let facError='';           // 読み込み失敗・データ無しのお知らせ
+function _facEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function _facReadCache(){ try{ const o=JSON.parse(localStorage.getItem(FAC_CACHE_KEY)||'null'); return (o&&Array.isArray(o.lots))?o:null; }catch(e){ return null; } }
+function _facWriteCache(o){ try{ localStorage.setItem(FAC_CACHE_KEY,JSON.stringify(o)); }catch(e){} }
+// "2026-10-15T09:40:00" をその端末の時刻として読む（タイムゾーン付きならそのまま）
+function _facParseTime(s){
+  if(!s) return null;
+  const m=String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  const d=m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):new Date(s);
+  return isNaN(d.getTime())?null:d;
+}
+// 検索用のゆらぎ吸収：全角/半角（NFKC）・大文字小文字・カタカナ→ひらがな・空白やハイフン無視
+function _facNorm(s){
+  let t=String(s==null?'':s);
+  try{ t=t.normalize('NFKC'); }catch(e){}
+  t=t.toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+  return t.replace(/[\s\-‐-―−・]/g,'');
+}
+function _facCatOf(l){ return String(l.cat||l.cat_label||'その他'); }
+function _facLabelOf(l){ const c=_facCatOf(l); const f=FAC_FIXED_CATS.find(x=>x[0]===c); return f?f[1]:String(l.cat_label||l.cat||'その他'); }
+function _facUnit(l){ return _facCatOf(l)==='bou_uki'?'本':'個'; }
+function _facNum(n){ return (typeof n==='number'&&isFinite(n))?n.toLocaleString('ja-JP'):'–'; }
+
+function openFactoryScreen(){
+  if(!facSnap) facSnap=_facReadCache();
+  renderFactory();
+  loadFactory();
+}
+async function loadFactory(){
+  if(facLoading) return;
+  if(!cloudKey()){ facError='設定でクラウドの合言葉を入れてください'; renderFactory(); return; }
+  facLoading=true; renderFactoryHead();
+  let ctl=null, timer=null;
+  try{
+    if(typeof AbortController!=='undefined'){ ctl=new AbortController(); timer=setTimeout(()=>{ try{ctl.abort();}catch(_){} },20000); }
+    const res=await fetch(FACTORY_URL+'?action=get_factory&key='+encodeURIComponent(cloudKey())+'&t='+Date.now(), ctl?{signal:ctl.signal}:undefined);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const body=await res.json();
+    if(!body||body.ok===false) throw new Error((body&&body.error)||'ng');
+    if(body.json==null||body.json===''){
+      facError=facSnap?'':'工場の情報はまだ届いていません';
+    }else{
+      const d=(typeof body.json==='string')?JSON.parse(body.json):body.json;
+      if(!d||!Array.isArray(d.lots)) throw new Error('bad json');
+      facSnap={generated_at:d.generated_at||body.generated_at||'', lots:d.lots, fetchedAt:Date.now()};
+      _facWriteCache(facSnap);
+      facError='';
+    }
+  }catch(e){
+    facError=(e&&e.message==='bad key')?CLOUD_BADKEY_MSG:'読み込めませんでした（電波・クラウドを確認）';
+  }finally{
+    if(timer) clearTimeout(timer);
+    facLoading=false;
+    renderFactory();
+  }
+}
+function setFacCat(c){ facCat=c; renderFactory(); }
+function toggleFacSort(){ facSortEta=!facSortEta; renderFactory(); }
+
+function renderFactoryHead(){
+  const tEl=document.getElementById('fac-time'); if(!tEl) return;
+  const btn=document.getElementById('fac-refresh');
+  if(btn){ btn.disabled=facLoading; btn.textContent=facLoading?'読み込み中…':'↻ 最新にする'; }
+  const d=facSnap?_facParseTime(facSnap.generated_at):null;
+  if(d){
+    const p=n=>(n<10?'0':'')+n;
+    tEl.innerHTML=_facEsc((d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+p(d.getMinutes())+' 時点')+'<small>工場から10分ごとに届きます</small>';
+  }else{
+    tEl.innerHTML=facLoading?'読み込み中…':'まだ読み込んでいません';
+  }
+  let a='';
+  if(facError) a+='<div class="fac-alert err">⚠ '+_facEsc(facError)+(facSnap?'<br><span style="font-size:13px">前に読み込んだ内容を表示しています。</span>':'')+'</div>';
+  if(d && Date.now()-d.getTime()>60*60*1000) a+='<div class="fac-alert warn">⚠ 工場から新しい情報が届いていません（1時間以上前の内容です）</div>';
+  document.getElementById('fac-alerts').innerHTML=a;
+}
+
+function _facGouChips(gous){
+  return gous.map(x=>{
+    const has=(typeof x.n==='number'&&isFinite(x.n));
+    return '<span class="fac-g'+(has?'':' z')+'">'+_facEsc(x.g)+'<b>'+(has?_facNum(x.n):'–')+'</b></span>';
+  }).join('');
+}
+
+function renderFactory(){
+  renderFactoryHead();
+  const catsEl=document.getElementById('fac-cats'), listEl=document.getElementById('fac-list'), cntEl=document.getElementById('fac-count');
+  if(!catsEl||!listEl) return;
+  const lots=(facSnap&&Array.isArray(facSnap.lots))?facSnap.lots.filter(l=>l&&typeof l==='object'):[];
+  // カテゴリ（すべて／円錐ウキ／棒ウキ／ルアー／その他は届いた cat_label の順）
+  const counts={}; const extra=[];
+  lots.forEach(l=>{ const c=_facCatOf(l); counts[c]=(counts[c]||0)+1; if(!FAC_FIXED_CATS.some(f=>f[0]===c)&&!extra.some(e=>e[0]===c)) extra.push([c,_facLabelOf(l)]); });
+  const cats=[['all','すべて']].concat(FAC_FIXED_CATS,extra);
+  if(!cats.some(c=>c[0]===facCat)) facCat='all';
+  facCatList=cats.map(c=>c[0]);
+  catsEl.innerHTML=cats.map((c,i)=>{
+    const n=c[0]==='all'?lots.length:(counts[c[0]]||0);
+    return '<button class="fac-cat'+(facCat===c[0]?' on':'')+'" onclick="setFacCat(facCatList['+i+'])">'+_facEsc(c[1])+'<b>'+n+'</b></button>';
+  }).join('')+'<button class="fac-cat sort'+(facSortEta?' on':'')+'" onclick="toggleFacSort()">'+(facSortEta?'✓ ':'')+'完成が近い順</button>';
+
+  const qEl=document.getElementById('fac-search');
+  const q=_facNorm(qEl?qEl.value:'');
+  let view=lots.map((l,i)=>({l,i})).filter(o=>facCat==='all'||_facCatOf(o.l)===facCat);
+  if(q) view=view.filter(o=>_facNorm(o.l.code).includes(q)||_facNorm(o.l.name).includes(q));
+  if(facSortEta){
+    const key=l=>{ const s=String(l.eta||l.eta_from||l.eta_to||''); return /^\d{4}-\d{2}-\d{2}/.test(s)?s.slice(0,10):'9999-99-99'; };
+    view.sort((a,b)=>{ const ka=key(a.l),kb=key(b.l); if(ka!==kb) return ka<kb?-1:1; const pa=+a.l.pct||0,pb=+b.l.pct||0; if(pa!==pb) return pb-pa; return a.i-b.i; });
+  }
+  if(cntEl) cntEl.textContent=lots.length?(view.length+' ロット'+(q?'（「'+(qEl.value||'').trim()+'」でさがした結果）':'')):'';
+
+  if(!lots.length){
+    listEl.innerHTML='<div class="fac-empty">'+(facLoading?'読み込み中…':(facError?_facEsc(facError):'表示できるロットがありません'))+'</div>';
+    return;
+  }
+  let html='';
+  // さがしている時だけ：同じ品番のロットが2つ以上あれば、号数ごとの合計を1行で出す
+  if(q){
+    const groups=[]; const byKey={};
+    view.forEach(o=>{ const l=o.l; const k=(l.code?'c:'+l.code:'n:'+(l.name||'')); if(!byKey[k]){ byKey[k]={l,lots:[]}; groups.push(byKey[k]); } byKey[k].lots.push(l); });
+    groups.filter(g=>g.lots.length>=2).slice(0,6).forEach(g=>{
+      let total=0, before=0; const order=[]; const sum={};
+      g.lots.forEach(l=>{
+        total+=(+l.qty||0);
+        if(l.gou_split===false||!Array.isArray(l.gous)||!l.gous.length){ before+=(+l.qty||0); return; }
+        l.gous.forEach(x=>{ if(!x) return; const k=String(x.g); if(!(k in sum)){ sum[k]=null; order.push(k); } if(typeof x.n==='number'&&isFinite(x.n)) sum[k]=(sum[k]||0)+x.n; });
+      });
+      const u=_facUnit(g.l);
+      html+='<div class="fac-sum"><div class="fac-sum-t">📦 <b>'+_facEsc(g.l.name||g.l.code)+'</b>　'+g.lots.length+'ロット合計 <b>'+_facNum(total)+u+'</b>'+(before?'<span style="color:var(--text2)">（うち号数分け前 '+_facNum(before)+u+'）</span>':'')+'</div>'
+        +(order.length?'<div class="fac-gous">'+_facGouChips(order.map(k=>({g:k,n:sum[k]})))+'</div>':'')+'</div>';
+    });
+  }
+  if(!view.length){
+    html+='<div class="fac-empty">見つかりませんでした</div>';
+  }
+  view.forEach(o=>{
+    const l=o.l;
+    const pct=Math.max(0,Math.min(100,+l.pct||0));
+    const label=String(l.eta_label||'');
+    const etaWarn=!!l.eta_note||!label||/できません|上旬|中旬|下旬/.test(label);
+    const etaTxt=label?(/できません/.test(label)?label:'完成予想 '+label):'完成予想 ―';
+    const sub=[l.code, (l.no&&l.no!==l.code)?l.no:''].filter(Boolean).join(' · ');
+    let gous;
+    if(l.gou_split===false||!Array.isArray(l.gous)||!l.gous.length) gous='<span class="fac-g none">号数はこれから分けます</span>';
+    else gous=_facGouChips(l.gous.filter(Boolean));
+    const step=(l.step_idx!=null&&l.step_total)?'<span class="n">'+_facEsc(l.step_idx)+' / '+_facEsc(l.step_total)+' 工程</span>':'';
+    html+='<div class="fac-lot">'
+      +'<div class="fac-r1"><span class="fac-name">'+_facEsc(l.name||l.code||'（品名なし）')+(l.demo?'<span class="fac-demo">試作</span>':'')+'<span class="fac-qty">'+_facNum(+l.qty)+_facUnit(l)+'</span>'+(sub?'<span class="fac-sub">'+_facEsc(sub)+'</span>':'')+'</span>'
+      +'<span class="fac-eta'+(etaWarn?' w':'')+'">'+_facEsc(etaTxt)+(l.eta_note?'<small>'+_facEsc(l.eta_note)+'</small>':'')+'</span></div>'
+      +'<div class="fac-step">いま：<b>'+_facEsc(l.process||'―')+'</b>'+(l.state?'（'+_facEsc(l.state)+'）':'')+step+'</div>'
+      +'<div class="fac-bar"><i style="width:'+pct+'%"></i></div>'
+      +'<div class="fac-gous">'+gous+'</div>'
+      +'</div>';
+  });
+  listEl.innerHTML=html;
+}
 </script>
 </div>
 <div id="print-overlay" class="print-overlay" style="display:none">
