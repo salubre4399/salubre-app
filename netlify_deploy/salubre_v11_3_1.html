@@ -267,6 +267,10 @@ svg{display:inline-block;vertical-align:middle}
 #screen-factory .fx-pc.on{background:var(--fx-blue);border-color:var(--fx-blue);color:#fff}
 #screen-factory .fx-pc.on b{color:#e8f0ff}
 #screen-factory .fx-pc .w{display:inline-block;width:7px;height:7px;border-radius:4px;background:var(--fx-green);margin-right:5px;vertical-align:1px}
+#screen-factory .fx-pgh{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;margin-left:4px;padding-left:10px;border-left:2px solid var(--fx-line2)}
+#screen-factory .fx-pgh.first{margin-left:0;padding-left:0;border-left:0}
+#screen-factory .fx-pgh .fx-pc{min-width:0}
+#screen-factory .fx-pcat{flex:none;font-size:11px;font-weight:700;color:var(--fx-ink3);white-space:nowrap}
 #screen-factory .fx-count{font-size:13px;color:var(--fx-ink2);margin:10px 2px 8px}
 #screen-factory .fx-count b{color:var(--fx-ink)}
 #screen-factory .fx-sum{background:var(--fx-card);border:1px solid var(--fx-line);border-left:4px solid var(--fx-blue);border-radius:10px;padding:10px 14px;margin-bottom:8px}
@@ -760,8 +764,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-C（工場タブが工場PCのような表に・工程でも探せる・号数が予定か実数か分かる）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-C」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20-C）: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-20-D（工場タブの工程を、工程の順番に並べました）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-20-D」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/20-D）: <b>工場タブの工程を、工程の順番に並べました</b>。「いまの工程で絞る」のボタンが、工場の工程の順（左から最初の工程 → 最後の工程）に並びます。「全部」のときは 円錐ウキ → 棒ウキ → ルアー の順に、区分の名前で区切って出ます。表の見出し「いまの工程」で並べ替えたときも工程の順になります。<br>前回（10/20-C）の更新: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -859,7 +863,7 @@ svg{display:inline-block;vertical-align:middle}
       <div class="fx-chips fx-cr"><span id="fac-cats" class="fx-chips"></span><button class="fx-chip" id="fac-working" type="button" onclick="toggleFacWork()">作業中だけ</button></div>
     </div>
     <div class="fx-pwrap" id="fac-pwrap">
-      <div class="fx-ph"><span>いまの工程で絞る（数字＝その工程にいるロット数・<span class="fx-dotg">●</span>＝だれか作業中）</span><a id="fac-pmore" role="button" onclick="toggleFacPall()">全部見る</a></div>
+      <div class="fx-ph"><span>いまの工程で絞る（工程の順番・数字＝その工程にいるロット数・<span class="fx-dotg">●</span>＝だれか作業中）</span><a id="fac-pmore" role="button" onclick="toggleFacPall()">全部見る</a></div>
       <div class="fx-pchips" id="fac-pchips"></div>
     </div>
     <div class="fx-count" id="fac-count"></div>
@@ -5921,11 +5925,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 const FACTORY_URL='https://script.google.com/macros/s/AKfycbwpgA72jDaW4TCvaCO2WY5T7VnGFQhhUtV4OgBKN5b7-SRDUA_9VM9oCJHAgNL_OG9N/exec';   // 受け口を1本にまとめたので CLOUD_WEBHOOK と同じURL（2026-10-20）
 const FAC_CACHE_KEY='salubre_factory_snapshot_v1';
 const FAC_FIXED_CATS=[['ensui_uki','円錐ウキ'],['bou_uki','棒ウキ'],['lure','ルアー']];
-let facSnap=null;          // {generated_at, lots:[...]}
+let facSnap=null;          // {generated_at, lots:[...], process_order:{区分:[工程名…]}（2026-10-20-D。古いデータには無い）}
 let facCat='all';
 let facCatList=['all'];
 let facWork=false;         // 作業中だけ
 let facProc='';           // いまの工程で絞る（チップ）
+let facProcCat='';        // そのチップの区分（同じ名前の工程が区分ちがいにあるため。2026-10-20-D）
 let facProcList=[];
 let facSort=null;          // 見出しで並べ替え {k, dir}。null＝作業中 → 完成が近い順
 let facOpen=null;          // 開いている行（lot_id）
@@ -5950,7 +5955,7 @@ function _facNorm(s){
   t=t.toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
   return t.replace(/[\s\-‐-―−・()（）/]/g,'');
 }
-function _facCatOf(l){ return String(l.cat||l.cat_label||'その他'); }
+function _facCatOf(l){ return _facCatKey(l.cat||l.cat_label||'その他'); }   // bou・ensui も 棒ウキ・円錐ウキ（2026-10-20-D）
 function _facLabelOf(l){ const c=_facCatOf(l); const f=FAC_FIXED_CATS.find(x=>x[0]===c); return f?f[1]:String(l.cat_label||l.cat||'その他'); }
 function _facUnit(l){ return _facCatOf(l)==='bou_uki'?'本':'個'; }
 function _facNum(n){ return (typeof n==='number'&&isFinite(n))?n.toLocaleString('ja-JP'):'–'; }
@@ -5976,7 +5981,8 @@ async function loadFactory(){
     }else{
       const d=(typeof body.json==='string')?JSON.parse(body.json):body.json;
       if(!d||!Array.isArray(d.lots)) throw new Error('bad json');
-      facSnap={generated_at:d.generated_at||body.generated_at||'', lots:d.lots, fetchedAt:Date.now()};
+      const po=(d.process_order&&typeof d.process_order==='object'&&!Array.isArray(d.process_order))?d.process_order:null;
+      facSnap={generated_at:d.generated_at||body.generated_at||'', lots:d.lots, process_order:po, fetchedAt:Date.now()};
       _facWriteCache(facSnap);
       facError='';
     }
@@ -6014,7 +6020,28 @@ function _facGouChips(gous, yt){
   }).join('');
 }
 // 作業中の工程が2つ以上なら「・」でつないで届く。かっこの中の「・」（準備・片付け含）では切らない
+// ── 工程の順番（2026-10-20-D）：工場から届く process_order {区分:[工程名…]} の順に並べる ──
+// ロットの cat が bou・ensui のときも bou_uki・ensui_uki の順番で読む
+function _facCatKey(c){ c=String(c||''); return c==='bou'?'bou_uki':c==='ensui'?'ensui_uki':c; }
+function _facCatRank(c){ const k=_facCatKey(c), i=FAC_FIXED_CATS.findIndex(f=>f[0]===k); return i>=0?i:FAC_FIXED_CATS.length; }
+let _facOrdMemo=null;
+function _facOrd(c){
+  const po=facSnap&&facSnap.process_order;
+  if(!po||typeof po!=='object') return null;
+  if(!_facOrdMemo||_facOrdMemo.po!==po) _facOrdMemo={po:po,m:{}};
+  const k=_facCatKey(c);
+  if(!Object.prototype.hasOwnProperty.call(_facOrdMemo.m,k)){
+    const a=Array.isArray(po[k])?po[k].map(String):null, ix=Object.create(null);
+    if(a) a.forEach((n,i)=>{ if(!(n in ix)) ix[n]=i; });
+    _facOrdMemo.m[k]=a&&a.length?{n:a.length,ix:ix}:null;
+  }
+  return _facOrdMemo.m[k];
+}
+// いまの工程を工程ごとに分ける。processes が無い古いデータは「・」でつないだ process を分ける。
+// 工程名にも「・」があるので（かさ取り・面取り など）、工程の順番にある名前は長い方から1つにまとめる
 function _facProcs(l){
+  // 新しい工場サーバーは processes（いまの工程を1つずつ）を付ける。あればそれを使う（2026-10-20-D）
+  if(Array.isArray(l.processes)){ const a=l.processes.filter(x=>typeof x==='string'&&x); if(a.length) return a.filter((x,i)=>a.indexOf(x)===i); }
   const out=[]; let cur='', d=0;
   for(const c of String(l.process||'')){
     if(c==='('||c==='（') d++;
@@ -6022,7 +6049,27 @@ function _facProcs(l){
     if(c==='・'&&!d){ if(cur) out.push(cur); cur=''; } else cur+=c;
   }
   if(cur) out.push(cur);
-  return out;
+  const o=_facOrd(_facCatOf(l));
+  if(!o||out.length<2) return out;
+  const res=[];
+  for(let i=0;i<out.length;){
+    let j=out.length;
+    while(j>i+1&&!(out.slice(i,j).join('・') in o.ix)) j--;
+    res.push(out.slice(i,j).join('・')); i=j;
+  }
+  return res.filter((x,i)=>res.indexOf(x)===i);
+}
+// 工程の位置（小さいほど前）。順番に無い名前は順番の後ろ。順番が無い古いデータは step_idx
+function _facPRank(c,p,si){
+  const o=_facOrd(c);
+  if(o) return (p in o.ix)?o.ix[p]:o.n+(+si||0);
+  return +si||0;
+}
+// ロットの並べ替え用：区分の順 → いまの工程の位置 → 何工程目か
+function _facLotPRank(l){
+  const c=_facCatOf(l), ps=_facProcs(l), si=+l.step_idx||0, o=_facOrd(c);
+  const r=ps.length?Math.min.apply(null,ps.map(p=>_facPRank(c,p,si))):(o?o.n+si:si);
+  return _facCatRank(c)*1e6+r*100+Math.min(99,si)+(l.process?0:5e5);
 }
 // 号数で探すとき：その号数を作っている（数が入っている）ロットだけ当てる
 function _facGouKeys(l){ return (Array.isArray(l.gous)?l.gous:[]).filter(x=>x&&typeof x.n==='number'&&x.n>0).map(x=>_facNorm(x.g)); }
@@ -6086,9 +6133,9 @@ function _facGouNote(l){
 function setFacCat(c){ facCat=c; facLimit=80; renderFactory(); }
 function toggleFacWork(){ facWork=!facWork; facLimit=80; renderFactory(); }
 function toggleFacPall(){ facPall=!facPall; renderFactory(); }
-function facPickProc(i){ const p=facProcList[i]; if(p==null) return; facProc=(facProc===p)?'':p; const q=document.getElementById('fac-search'); if(q) q.value=''; facLimit=80; renderFactory(); }
-function facOnSearch(){ facProc=''; facLimit=80; renderFactory(); }
-function facClearSearch(){ const q=document.getElementById('fac-search'); if(q){ q.value=''; } facProc=''; renderFactory(); if(q) q.focus(); }
+function facPickProc(i){ const t=facProcList[i]; if(!t) return; const on=facProc===t[1]&&facProcCat===t[0]; facProc=on?'':t[1]; facProcCat=on?'':t[0]; const q=document.getElementById('fac-search'); if(q) q.value=''; facLimit=80; renderFactory(); }
+function facOnSearch(){ facProc=''; facProcCat=''; facLimit=80; renderFactory(); }
+function facClearSearch(){ const q=document.getElementById('fac-search'); if(q){ q.value=''; } facProc=''; facProcCat=''; renderFactory(); if(q) q.focus(); }
 function facSortBy(k){ facSort=(facSort&&facSort.k===k)?{k:k,dir:-facSort.dir}:{k:k,dir:(k==='qty'||k==='pct')?-1:1}; renderFactory(); }
 function facToggleOpen(id){ facOpen=(facOpen===id)?null:id; renderFactory(); }
 function facMore(){ facLimit+=120; renderFactory(); }
@@ -6096,7 +6143,7 @@ function facMore(){ facLimit+=120; renderFactory(); }
 const FAC_COLS=[{k:'name',t:'品名・品番'},{k:'proc',t:'いまの工程'},{k:'state',t:'ようす'},{k:'qty',t:'数'},{k:'pct',t:'全体'},{k:'eta',t:'完成予想'}];
 function _facKey(l,k){
   if(k==='name') return String(l.name||l.code||'');
-  if(k==='proc') return l.step_total?(+l.step_idx||0)/(+l.step_total):9;
+  if(k==='proc') return _facLotPRank(l);
   if(k==='state') return _facWorking(l)?0:1;
   if(k==='qty') return +l.qty||0;
   if(k==='pct') return +l.pct||0;
@@ -6188,12 +6235,23 @@ function renderFactory(){
   const wbtn=document.getElementById('fac-working'); if(wbtn) wbtn.classList.toggle('on',facWork);
 
   const base=lots.map((l,i)=>({l:l,i:i})).filter(o=>facCat==='all'||_facCatOf(o.l)===facCat);
-  // いまの工程のチップ（作業中のある工程 → ロットの多い工程の順）
-  const pm={}, pw={};
-  base.forEach(o=>_facProcs(o.l).forEach(p=>{ pm[p]=(pm[p]||0)+1; if(_facWorking(o.l)) pw[p]=1; }));
-  facProcList=Object.keys(pm).sort((a,b)=>(pw[b]||0)-(pw[a]||0)||pm[b]-pm[a]||a.localeCompare(b,'ja'));
-  if(facProc&&!pm[facProc]) facProc='';
-  if(pcEl) pcEl.innerHTML=facProcList.map((p,i)=>'<button class="fx-pc'+(facProc===p?' on':'')+'" type="button" title="'+_facEsc(p)+'" onclick="facPickProc('+i+')">'+(pw[p]?'<i class="w"></i>':'')+_facEsc(p)+'<b>'+pm[p]+'</b></button>').join('');
+  // いまの工程のチップ（2026-10-20-D：区分ごとに工程の順番。全部のときは 円錐ウキ → 棒ウキ → ルアー で区切る。●＝作業中）
+  const pm={}, pw={}, ps={}, pc={}, pl={};
+  base.forEach(o=>{ const c=_facCatOf(o.l), si=+o.l.step_idx||0;
+    _facProcs(o.l).forEach(p=>{ const k=c+'\u0001'+p; pm[k]=(pm[k]||0)+1; pc[k]=[c,p];
+      if(_facWorking(o.l)) pw[k]=1; if(!(k in ps)||si<ps[k]) ps[k]=si; }); pl[c]=_facLabelOf(o.l); });
+  const cr=c=>{ const i=cats.findIndex(x=>x[0]===c); return i<0?999:i; };
+  const keys=Object.keys(pm).sort((a,b)=>{ const x=pc[a], y=pc[b];
+    return cr(x[0])-cr(y[0]) || String(x[0]).localeCompare(String(y[0])) || _facPRank(x[0],x[1],ps[a])-_facPRank(y[0],y[1],ps[b]) || x[1].localeCompare(y[1],'ja'); });
+  facProcList=keys.map(k=>pc[k]);
+  if(facProc&&!pm[facProcCat+'\u0001'+facProc]){ facProc=''; facProcCat=''; }
+  // 区分の名前は、その区分の最初のチップと1つにまとめて出す（名前だけが行の終わりに残らない）
+  let lastCat=null;
+  if(pcEl) pcEl.innerHTML=keys.map((k,i)=>{ const c=pc[k][0], p=pc[k][1];
+    const b='<button class="fx-pc'+(facProc===p&&facProcCat===c?' on':'')+'" type="button" title="'+_facEsc(p)+'" onclick="facPickProc('+i+')">'+(pw[k]?'<i class="w"></i>':'')+_facEsc(p)+'<b>'+pm[k]+'</b></button>';
+    const hd=facCat==='all'&&c!==lastCat, first=lastCat===null;
+    lastCat=c;
+    return hd?'<span class="fx-pgh'+(first?' first':'')+'"><span class="fx-pcat">'+_facEsc(pl[c]||c)+'</span>'+b+'</span>':b; }).join('');
   if(pcEl) pcEl.classList.toggle('all',facPall);
   if(pmEl) pmEl.textContent=facPall?'たたむ':'全部見る（'+facProcList.length+'）';
   if(pwEl) pwEl.style.display=lots.length?'':'none';
@@ -6202,7 +6260,7 @@ function renderFactory(){
   const raw=qEl?String(qEl.value||'').trim():'';
   const words=raw.split(/\s+/).map(_facNorm).filter(Boolean);
   if(qbEl) qbEl.classList.toggle('has',!!raw);
-  const view=base.filter(o=>(!facWork||_facWorking(o.l))&&(!facProc||_facProcs(o.l).indexOf(facProc)>=0)&&_facHit(o.l,words));
+  const view=base.filter(o=>(!facWork||_facWorking(o.l))&&(!facProc||(_facCatOf(o.l)===facProcCat&&_facProcs(o.l).indexOf(facProc)>=0))&&_facHit(o.l,words));
   const L=view.map(o=>o.l);
 
   if(!lots.length){
