@@ -764,8 +764,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-30-A（「☁ 前回取得」で足りない商品もクラウドから入るようにしました）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-30-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/30-A）: <b>「☁ 前回取得」で、端末にまだ無い商品もクラウドから入るようにしました</b>。これまでは、その店の商品が端末に1つでも登録されていると、登録済みの商品の分しか取り込まれませんでした（例：GREXが見えない）。<br>前回（10/20-D）の更新: <b>工場タブの工程を、工程の順番に並べました</b>。「いまの工程で絞る」のボタンが、工場の工程の順（左から最初の工程 → 最後の工程）に並びます。「全部」のときは 円錐ウキ → 棒ウキ → ルアー の順に、区分の名前で区切って出ます。表の見出し「いまの工程」で並べ替えたときも工程の順になります。<br>前回（10/20-C）の更新: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-30-B（「☁ 前回取得」1回でソルブレ・GREXの両方を取り込みます）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-30-B」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/30-B）: <b>「☁ 前回取得」を1回押すと、ソルブレとGREXの両方をまとめて取り込みます</b>。ブランドを切り替えて押し直す必要はありません。取り込んだあとは、どちらのブランドでも日付を選んで前回の内容が見られます。<br>前回（10/30-A）の更新: <b>「☁ 前回取得」で、端末にまだ無い商品もクラウドから入るようにしました</b>。これまでは、その店の商品が端末に1つでも登録されていると、登録済みの商品の分しか取り込まれませんでした（例：GREXが見えない）。<br>前回（10/20-D）の更新: <b>工場タブの工程を、工程の順番に並べました</b>。「いまの工程で絞る」のボタンが、工場の工程の順（左から最初の工程 → 最後の工程）に並びます。「全部」のときは 円錐ウキ → 棒ウキ → ルアー の順に、区分の名前で区切って出ます。表の見出し「いまの工程」で並べ替えたときも工程の順になります。<br>前回（10/20-C）の更新: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -4615,131 +4615,106 @@ function applyCloudHistory(data,json,storeName,brandLabel){
     }
   });
   // 「最終確認」も履歴の最新に合わせる。入口画面がこれを見ている
-  localStorage.setItem('salubre_lastcheck_'+currentStoreId,order[0]);
+  const lk='salubre_lastcheck_'+currentStoreId, cur=fmtDate(localStorage.getItem(lk)||'');
+  const ts=d=>new Date(String(d).replace(/\//g,'-')).getTime()||0;
+  if(!cur||ts(order[0])>ts(cur)) localStorage.setItem(lk,order[0]);   // 2ブランド続けて呼ぶので新しい方を残す
   return order.length;
 }
 
+/* ☁ 前回取得：1回押せば ソルブレ・GREX の両方を取り込む（2026-10-30-B）。
+   通信は1回だけ。ブランドごとの保存先（在庫・陳列設定）は currentBrand で決まるので、
+   一時的に切り替えて振り分け、最後に元のブランドへ戻す。 */
 async function fetchPrevStockFromCloud(){
   if(currentStoreId===null){showToast('店舗を選択してください');return;}
   const storeName=STORE_LIST[parseInt(currentStoreId)];
-  const brandLabel=currentBrand==='grex'?'GREX':'ソルブレ';
   if(needCloudKey('manual')) return;
   showToast('☁ クラウドからデータを取得中...');
   try{
     const res=await fetch(cloudGetUrl('get_data',(cfg.myName||'').trim()));
     const json=await res.json();
     if(json&&json.ok===false) throw new Error(json.error||'ng');   // bad key／busy（混み合い）
-    let capApplied=false;
-    const capRows=(json.capacity||[]).slice(1);
-    const capRow=capRows.find(r=>String(r[1])===storeName&&String(r[0])===brandLabel);
-    if(capRow){
-      const mode=String(capRow[2]||'')||'mixed';
-      const retsu=parseInt(capRow[3])||0;
-      const totalYoko=parseInt(capRow[4])||0;
-      if(retsu||totalYoko){
-        saveStoreCapDefault(currentStoreId,{mode,retsu,totalYoko});
-        capApplied=true;
-      }
-    }
-    const rows=(json.stock||[]).slice(1);
-    const storeRows=rows.filter(r=>String(r[2])===storeName&&String(r[1])===brandLabel);
-    if(!storeRows.length){
-      renderStockList();
-      showToast(capApplied?'✓ 陳列設定を取得しました（在庫データはまだありません）':'クラウドにこの店舗のデータがまだありません');
-      return;
-    }
-    // 商品名→{cat, colors:{カラー名:{サイズ:qty}}} に集約
-    const byProd={};
-    const prodOrder=[];
-    let latestDate='';
-    storeRows.forEach(r=>{
-      const pname=String(r[4]),cat=String(r[3]||''),color=String(r[5]),size=String(r[6]),qty=r[7],chk=String(r[9]||'');
-      if(!byProd[pname]){byProd[pname]={cat,colors:{}};prodOrder.push(pname);}
-      if(!byProd[pname].colors[color])byProd[pname].colors[color]={};
-      byProd[pname].colors[color][size]=qty;
-      if(chk&&(!latestDate||chk>latestDate))latestDate=chk;   // 比較はISOのまま（文字列順＝時系列順）
-    });
-    latestDate=fmtDate(latestDate);   // 比較が終わったら表示用の形に直してから保存する
-    let data=loadStoreProducts(currentStoreId);
-    // 商品が未登録なら、クラウドデータから商品構成を自動生成
-    if(!data.length){
-      const db=getDB();
-      data=prodOrder.map(pname=>{
-        const info=byProd[pname];
-        const master=db.find(p=>p.name===pname);
-        let colors;
-        if(master){
-          // マスターDBの正しいサイズ構成を使用
-          colors=master.colors.map(cn=>({
-            cname:cn,
-            sizes:Object.fromEntries(master.sizes.map(s=>[s,'']))
-          }));
-        } else {
-          // マスターにない場合はクラウドのデータから構成
-          colors=Object.keys(info.colors).map(cn=>({
-            cname:cn,
-            sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))
-          }));
-        }
-        // クラウドデータを前回スナップショットとして設定
-        const prevSnapshot=colors.map(c=>({cname:c.cname,sizes:{...(info.colors[c.cname]||{})}}));
-        return{
-          code:master?master.code:pname,
-          name:pname,
-          cat:master?master.cat:info.cat,
-          colors,prevSnapshot,
-          prevDate:latestDate||'クラウド'
-        };
+    const keep=currentBrand;
+    const msgs=[];
+    try{
+      ['salubre','grex'].forEach(b=>{
+        currentBrand=b;
+        msgs.push(brandLabelJP(b)+'：'+applyCloudStockBrand(json,storeName,b==='grex'?'GREX':'ソルブレ'));
       });
-      const hn0=applyCloudHistory(data,json,storeName,brandLabel);
-      saveStoreProducts(currentStoreId,data);
-      renderStockList();
-      showToast('✓ '+data.length+'商品をクラウドから復元しました'+(latestDate?'（'+latestDate+'）':'')
-        +(hn0?'／履歴'+hn0+'世代':''));
-      return;
-    }
-    // 既存商品がある場合は前回スナップショットを更新
-    let cnt=0;
-    data.forEach(prod=>{
-      if(!byProd[prod.name])return;
-      prod.prevSnapshot=prod.colors.map(c=>{
-        const cn=c.cname||'—';
-        return{cname:cn,sizes:byProd[prod.name].colors[cn]||{}};
-      });
-      prod.prevDate=latestDate||'クラウド';
-      cnt++;
-    });
-    // 端末にまだ無い商品はクラウドから足す（2026-10-30）。
-    // 以前は登録済みの商品だけ更新していたので、1つでも登録があると残りが取り込まれなかった
-    const have=new Set(data.map(p=>p.name));
-    const db=getDB();
-    let added=0;
-    prodOrder.forEach(pname=>{
-      if(have.has(pname)) return;
-      const info=byProd[pname];
-      const master=db.find(p=>p.name===pname);
-      const colors=master
-        ? master.colors.map(cn=>({cname:cn,sizes:Object.fromEntries(master.sizes.map(s=>[s,'']))}))
-        : Object.keys(info.colors).map(cn=>({cname:cn,sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))}));
-      data.push({
-        code:master?master.code:pname,
-        name:pname,
-        cat:master?master.cat:info.cat,
-        colors,
-        prevSnapshot:colors.map(c=>({cname:c.cname,sizes:{...(info.colors[c.cname]||{})}})),
-        prevDate:latestDate||'クラウド'
-      });
-      added++;
-    });
-    if(!cnt&&!added){showToast('一致する商品データが見つかりませんでした');return;}
-    const hn=applyCloudHistory(data,json,storeName,brandLabel);
-    saveStoreProducts(currentStoreId,data);
+    }finally{ currentBrand=keep; }
     renderStockList();
-    showToast('✓ '+[cnt?cnt+'商品の前回データを読み込みました':'',added?added+'商品をクラウドから追加しました':''].filter(Boolean).join('／')
-      +(latestDate?'（'+latestDate+'）':'')+(hn?'／履歴'+hn+'世代':''));
+    showToast(msgs.join('　'));
   }catch(e){
     showToast(e&&e.message==='bad key'?CLOUD_BADKEY_MSG:'取得エラー: '+e.message);
   }
+}
+// 1ブランド分をクラウドから取り込む。結果をひとことで返す（表示は呼び出し側）
+function applyCloudStockBrand(json,storeName,brandLabel){
+  let capApplied=false;
+  const capRows=(json.capacity||[]).slice(1);
+  const capRow=capRows.find(r=>String(r[1])===storeName&&String(r[0])===brandLabel);
+  if(capRow){
+    const mode=String(capRow[2]||'')||'mixed';
+    const retsu=parseInt(capRow[3])||0;
+    const totalYoko=parseInt(capRow[4])||0;
+    if(retsu||totalYoko){
+      saveStoreCapDefault(currentStoreId,{mode,retsu,totalYoko});
+      capApplied=true;
+    }
+  }
+  const rows=(json.stock||[]).slice(1);
+  const storeRows=rows.filter(r=>String(r[2])===storeName&&String(r[1])===brandLabel);
+  if(!storeRows.length) return capApplied?'陳列設定のみ（在庫データなし）':'データなし';
+  // 商品名→{cat, colors:{カラー名:{サイズ:qty}}} に集約
+  const byProd={};
+  const prodOrder=[];
+  let latestDate='';
+  storeRows.forEach(r=>{
+    const pname=String(r[4]),cat=String(r[3]||''),color=String(r[5]),size=String(r[6]),qty=r[7],chk=String(r[9]||'');
+    if(!byProd[pname]){byProd[pname]={cat,colors:{}};prodOrder.push(pname);}
+    if(!byProd[pname].colors[color])byProd[pname].colors[color]={};
+    byProd[pname].colors[color][size]=qty;
+    if(chk&&(!latestDate||chk>latestDate))latestDate=chk;   // 比較はISOのまま（文字列順＝時系列順）
+  });
+  latestDate=fmtDate(latestDate);   // 比較が終わったら表示用の形に直してから保存する
+  const data=loadStoreProducts(currentStoreId);
+  // 登録済みの商品は前回スナップショットを更新
+  let cnt=0;
+  data.forEach(prod=>{
+    if(!byProd[prod.name])return;
+    prod.prevSnapshot=prod.colors.map(c=>{
+      const cn=c.cname||'—';
+      return{cname:cn,sizes:byProd[prod.name].colors[cn]||{}};
+    });
+    prod.prevDate=latestDate||'クラウド';
+    cnt++;
+  });
+  // 端末にまだ無い商品はクラウドから足す（2026-10-30）。
+  // 以前は登録済みの商品だけ更新していたので、1つでも登録があると残りが取り込まれなかった
+  const have=new Set(data.map(p=>p.name));
+  const db=getDB();
+  let added=0;
+  prodOrder.forEach(pname=>{
+    if(have.has(pname)) return;
+    const info=byProd[pname];
+    const master=db.find(p=>p.name===pname);
+    // マスターにあれば正しいサイズ構成、無ければクラウドのデータから構成
+    const colors=master
+      ? master.colors.map(cn=>({cname:cn,sizes:Object.fromEntries(master.sizes.map(s=>[s,'']))}))
+      : Object.keys(info.colors).map(cn=>({cname:cn,sizes:Object.fromEntries(Object.keys(info.colors[cn]).map(s=>[s,'']))}));
+    data.push({
+      code:master?master.code:pname,
+      name:pname,
+      cat:master?master.cat:info.cat,
+      colors,
+      prevSnapshot:colors.map(c=>({cname:c.cname,sizes:{...(info.colors[c.cname]||{})}})),
+      prevDate:latestDate||'クラウド'
+    });
+    added++;
+  });
+  if(!cnt&&!added) return '一致する商品なし';
+  const hn=applyCloudHistory(data,json,storeName,brandLabel);
+  saveStoreProducts(currentStoreId,data);
+  return '✓ '+(cnt+added)+'商品'+(latestDate?'（'+latestDate+'）':'')+(hn?'・履歴'+hn+'世代':'');
 }
 function restoreSnapshotByIndex(idx){
   if(currentStoreId===null) return;
