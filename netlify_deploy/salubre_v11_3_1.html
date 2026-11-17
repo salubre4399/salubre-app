@@ -509,6 +509,9 @@ svg{display:inline-block;vertical-align:middle}
       <button onclick="openStockAddModal()" style="flex:1;height:48px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">＋ 商品追加</button>
       <button onclick="buildReplenishOrder()" style="flex:1;height:48px;background:var(--accent-dark);color:#fff;border:none;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📋 補充発注書</button>
     </div>
+    <div style="margin:0 14px 6px">
+      <button onclick="openIrekaeModal()" style="width:100%;height:44px;background:var(--surface);color:var(--accent-dark);border:1.5px solid var(--accent-dark);border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🔄 入れ替え提案（新商品を入れて、売れていない品番を回収）</button>
+    </div>
     <!-- 行2: 日付・PDF・比率・陳列設定（均等4分割） -->
     <div class="tight-row" style="display:flex;gap:6px;margin:0 14px 6px">
       <input type="date" id="visit-date" style="flex:1;min-width:0;height:42px;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:0 2px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif">
@@ -556,6 +559,18 @@ svg{display:inline-block;vertical-align:middle}
       <div style="display:flex;gap:8px;margin-top:12px;flex-shrink:0">
         <button class="btn btn-outline" style="flex:1" onclick="closeModal('replenish-modal')">キャンセル</button>
         <button class="btn btn-primary" style="flex:1" onclick="createReplenishOrder()">発注書を作成</button>
+      </div>
+    </div>
+  </div>
+  <!-- 入れ替え提案モーダル（2026-11-17） -->
+  <div class="modal-overlay" id="irekae-modal" onclick="closeModalOutside(event,'irekae-modal')">
+    <div class="modal-sheet">
+      <div class="modal-title">🔄 入れ替え提案</div>
+      <div class="modal-sub" id="irekae-sub"></div>
+      <div id="irekae-body" style="overflow-y:auto;flex:1;margin-top:4px"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-shrink:0">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('irekae-modal')">閉じる</button>
+        <button class="btn btn-primary" style="flex:1" id="irekae-go" onclick="irekaeToCart()">注文カートに入れる</button>
       </div>
     </div>
   </div>
@@ -764,8 +779,8 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="btn-full" style="margin-top:4px"><button class="btn btn-primary" onclick="saveSettings()">設定を保存</button></div>
   <div class="btn-full"><button class="btn btn-outline" onclick="testEmail()">テストメールを送信</button></div>
-  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-10-30-B（「☁ 前回取得」1回でソルブレ・GREXの両方を取り込みます）</div>
-  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-10-30-B」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（10/30-B）: <b>「☁ 前回取得」を1回押すと、ソルブレとGREXの両方をまとめて取り込みます</b>。ブランドを切り替えて押し直す必要はありません。取り込んだあとは、どちらのブランドでも日付を選んで前回の内容が見られます。<br>前回（10/30-A）の更新: <b>「☁ 前回取得」で、端末にまだ無い商品もクラウドから入るようにしました</b>。これまでは、その店の商品が端末に1つでも登録されていると、登録済みの商品の分しか取り込まれませんでした（例：GREXが見えない）。<br>前回（10/20-D）の更新: <b>工場タブの工程を、工程の順番に並べました</b>。「いまの工程で絞る」のボタンが、工場の工程の順（左から最初の工程 → 最後の工程）に並びます。「全部」のときは 円錐ウキ → 棒ウキ → ルアー の順に、区分の名前で区切って出ます。表の見出し「いまの工程」で並べ替えたときも工程の順になります。<br>前回（10/20-C）の更新: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
+  <div style="text-align:center;font-size:14px;font-weight:700;color:var(--accent-dark);background:var(--accent-light);border-radius:6px;margin:6px 14px 4px;padding:6px 8px">🆕 更新版: 2026-11-17-A（在庫タブに「🔄 入れ替え提案」を追加しました）</div>
+  <div style="text-align:center;font-size:12px;color:var(--text3);margin:0 14px 14px">この表示が「2026-11-17-A」になっていれば最新版です。古い日付ならデプロイ／再読込がまだ反映されていません。<br>主な更新（11/17-A）: <b>在庫タブに「🔄 入れ替え提案」を追加しました</b>。新商品と入れる号数を選ぶと必要なフック数が出て、足りない分は<b>品番の年間売上が少ない順に、品番ごとまるごと回収</b>する候補を自動で選びます。行を押すと回収する／残すを切り替えられます。残す商品の補充もまとめて注文カートに入ります。「📊 CSV出力（提案書用）」を提案書作成ソフトで読むと「売場入れ替えのご提案」のページが付きます（売上の数字は提案書には出ません）。<br>前回（10/30-B）の更新:<b>「☁ 前回取得」を1回押すと、ソルブレとGREXの両方をまとめて取り込みます</b>。ブランドを切り替えて押し直す必要はありません。取り込んだあとは、どちらのブランドでも日付を選んで前回の内容が見られます。<br>前回（10/30-A）の更新: <b>「☁ 前回取得」で、端末にまだ無い商品もクラウドから入るようにしました</b>。これまでは、その店の商品が端末に1つでも登録されていると、登録済みの商品の分しか取り込まれませんでした（例：GREXが見えない）。<br>前回（10/20-D）の更新: <b>工場タブの工程を、工程の順番に並べました</b>。「いまの工程で絞る」のボタンが、工場の工程の順（左から最初の工程 → 最後の工程）に並びます。「全部」のときは 円錐ウキ → 棒ウキ → ルアー の順に、区分の名前で区切って出ます。表の見出し「いまの工程」で並べ替えたときも工程の順になります。<br>前回（10/20-C）の更新: ①<b>「🏭 工場」タブが、工場のパソコンと同じような一覧表になりました</b>。品名・いまの工程・ようす・数・全体の進み・完成予想が1行で見られます。行を押すと、号数ごとの数・色の内訳・工程のどこまで進んだかが開きます。②<b>工程の名前でも探せます</b>（例：「色スプレー」で、いま色スプレーにいる商品だけ）。号数（例：3B）やロット番号でも探せます。上の「いまの工程で絞る」ボタンや「作業中だけ」でも絞れます。見出しを押すと並べ替えます。③<b>号数の数が「予定」か「実数（工場で数えた数）」か分かります</b>。まだ数えていない予定の数は薄い点線と「予定」の札で出ます。④<b>色の内訳（オレンジ何個・イエロー何個）</b>と、乾燥中・中断・内職に出ている・何日待っているか、も出ます。<br>前回（10/20-B）の更新: ⓪<b>設定タブで「クラウドの合言葉」を入れてください（会社から伝えます）</b>。入れるまで、クラウドへの保存・取り出しは止まります。①<b>下のタブに「🏭 工場」を追加しました。工場で作っている商品の進み具合（いまの工程・完成予想・号数ごとの数）が出先でも見られます</b>。②<b>「保存した注文（下書き）」がパソコンとiPadで共有できます</b>。片方で保存した下書きを、もう片方で続きから入れられます。③<b>在庫の履歴・陳列設定・カラー比率・店舗やチェーンの登録もクラウドに保存されます</b>。別の端末の「☁ 前回取得」「☁ 共有データを取得」で呼び出せます。<br>前回（10/20-A）の更新: <b>9月中ごろから、注文・在庫が会社のスプレッドシートに届いていなかったのを直しました</b>。送り先が使えなくなっていました。この版で開いて同期すると、端末に残っている分が送られます。<br>前回（9/5）の更新: ⓪<b>在庫の履歴（3回分）がクラウド同期されるようになりました</b>。タブレットで記録した内容を、パソコンの「☁ 前回取得」で呼び出せます。これまでは端末の中にしか残らず、他の端末では前回の内容が見られませんでした。①<b>補充発注ボタンを押したとき、注文タブに入れる前に「金額」と「フック数」が見えます</b>。差引金額・使うフック・空くフック・棚の残りが出ます。フックが足りない場合は赤で警告します。②<b>すでに引き去りに入っている商品も、在庫から選べます</b>（「全量にする」）。棚から全部外してフックを空けたいときに使います。③<b>引き去りにした商品の補充は自動で取り下げます</b>。④「動きなし」判定が補充を見ていなかった件も入っています。</div>
   <div class="settings-section-title">💰 オープン価格（グッズ）の卸単価</div>
   <div class="card" style="margin:0 14px 10px">
     <div style="padding:12px 14px">
@@ -2240,6 +2255,20 @@ function exportCurrentOrderCSV(){
     :['ブランド','区分','商品名','浮力数','数量','定価','カラー構成','浮力ラインナップ','仕入額'];
   const allCols=new Set();
   const rowsData=[];
+  // 入れ替え提案（2026-11-17）から入れた商品があるときだけ、提案区分とフックの列を足す（提案書作成ソフトが「売場入れ替え」ページを作る）
+  const cartOf=(it,sign)=>products.find(p=>p.code===it.code&&(sign<0?p.kind==='return':p.kind!=='return'));
+  const ikTagged=products.filter(p=>p.irekae&&p.irekae.meta);
+  const ikMeta=ikTagged.length?ikTagged[0].irekae.meta:null;
+  const ikHead=ikMeta?['提案区分','使うフック','空くフック','フック上限','入替前フック']:[];
+  const ikCells=(it,sign)=>{
+    if(!ikMeta) return [];
+    const cp=cartOf(it,sign), t=cp&&cp.irekae, k=t?t.k:'';
+    const kubun=k==='new'?'新規導入':k==='refill'?'補充':k==='pull'?'引き去り':(sign<0?'引き去り':'追加注文');
+    // 新規導入のフックは、カートで数を直したあとの姿で数え直す
+    const use=k==='new'?calcProductHooks(cp.colors,ikMeta.mode||'mixed'):'';
+    const free=k==='pull'?(t.hooks||0):'';
+    return [kubun,use,free,ikMeta.cap,ikMeta.before];
+  };
   const add=(list,sign)=>{
     (list||[]).forEach(it=>{
       const dbProd=dbForBrand(it.brand).find(p=>p.name===it.name);
@@ -2269,6 +2298,7 @@ function exportCurrentOrderCSV(){
       });
       const baseRow=[brandLabelJP(it.brand),broadCat(dbProd?dbProd.cat:''),it.name,orderedSizeSet.size,qty,it.priceO,colorComp,lineup];
       if(!hideRateForStore) baseRow.push(sell*qty);
+      baseRow.push(...ikCells(it,sign));
       rowsData.push({
         base:baseRow,
         cells,
@@ -2278,7 +2308,7 @@ function exportCurrentOrderCSV(){
   add(d.items,1); add(d.returns,-1);
   if(!rowsData.length){showToast('数量が入力されていません');return;}
   const colList=[...allCols];
-  const rows=[[...baseHead,...colList]];
+  const rows=[[...baseHead,...ikHead,...colList]];
   rowsData.forEach(rd=>rows.push([...rd.base,...colList.map(c=>(c in rd.cells)?rd.cells[c]:0)]));
   const csv='﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
   shareOrDownload('salubre_order_'+ymd()+'.csv','text/csv',csv);
@@ -3638,13 +3668,9 @@ function _replenishTotalsHtml(orderGroups,manRetGroups,excG){
 
 function buildReplenishOrder(){
   if(currentStoreId===null||currentStoreId===''){showToast('店舗を選択してください');return;}
-  const storeName=STORE_LIST[parseInt(currentStoreId)];
-  const k=getKijun();
-  const excl=k.excludedCats||KIJUN_DEFAULTS.excludedCats;
   let stock=[];try{stock=JSON.parse(localStorage.getItem(getStockKey(currentStoreId))||'[]');}catch(e){}
   if(!stock.length){showToast('在庫データがありません');return;}
   let rep=[]; const exc=[];
-  const capDef=loadStoreCapDefault(currentStoreId);
   // 現在の注文カートで既に「引き去り」として追加済みの(商品・カラー)は、
   // そのカラーの全サイズを補充提案から除外する（在庫が0で引き去りカートに乗らなかった
   // サイズも含め、そのカラーごと止める意図とみなす）
@@ -3655,12 +3681,30 @@ function buildReplenishOrder(){
       if(Object.values(cl.sizes||{}).some(q=>parseInt(q)>0)) cartReturnKeys.add(p.name+'|'+cl.colorName);
     });
   });
+  const r=_calcReplenish(currentStoreId,(name,cname)=>cartReturnKeys.has(name+'|'+cname));
+  rep=r.rep; exc.push(...r.exc); _replenishExcludedCount=r.skipped;
+  // NA(導入なし)=補充提案に入れない／0=補充する で統一（確認ポップは廃止）
+  if(!rep.length&&!exc.length){showToast('✓ 全商品が基準在庫を満たしています');return;}
+  _replenishData=rep;_excessData=exc;_replenishAsReturn=new Set();
+  _renderReplenishModalContent();
+  document.getElementById('replenish-modal').classList.add('show');
+}
+// 補充の数を出す（基準数−今の数、1フックの上限でカット）。skip(name,cname) が true のカラーは丸ごと外す。
+// 補充発注書と入れ替え提案の両方で使う（2026-11-17 切り出し）
+function _calcReplenish(sid, skip){
+  const storeName=STORE_LIST[parseInt(sid)];
+  const k=getKijun();
+  const excl=k.excludedCats||KIJUN_DEFAULTS.excludedCats;
+  let stock=[];try{stock=JSON.parse(localStorage.getItem(getStockKey(sid))||'[]');}catch(e){}
+  const rep=[],exc=[];let skipped=0;
+  const capDef=loadStoreCapDefault(sid);
+  const isSkip=(n,c)=>!!(skip&&skip(n,c));
   stock.forEach(prod=>{
     if(excl.includes(prod.cat))return;
     let bySizeCur={};
     if(capDef.retsu&&capDef.mode!=='separated'){
       (prod.colors||[]).forEach(col=>{
-        if(cartReturnKeys.has(prod.name+'|'+col.cname))return;
+        if(isSkip(prod.name,col.cname))return;
         Object.entries(col.sizes||{}).forEach(([sz,q])=>{
           if(q===''||q===null||q===undefined||q==='NA')return;
           bySizeCur[sz]=(bySizeCur[sz]||0)+(parseInt(q)||0);
@@ -3669,8 +3713,8 @@ function buildReplenishOrder(){
     }
     (prod.colors||[]).forEach(col=>{
       const cname=col.cname;
-      if(cartReturnKeys.has(prod.name+'|'+cname)){
-        Object.keys(col.sizes||{}).forEach(buoyancy=>{ if(col.sizes[buoyancy]!=='') _replenishExcludedCount++; });
+      if(isSkip(prod.name,cname)){
+        Object.keys(col.sizes||{}).forEach(buoyancy=>{ if(col.sizes[buoyancy]!=='') skipped++; });
         return;
       }
       Object.keys(col.sizes||{}).forEach(buoyancy=>{
@@ -3693,11 +3737,7 @@ function buildReplenishOrder(){
       });
     });
   });
-  // NA(導入なし)=補充提案に入れない／0=補充する で統一（確認ポップは廃止）
-  if(!rep.length&&!exc.length){showToast('✓ 全商品が基準在庫を満たしています');return;}
-  _replenishData=rep;_excessData=exc;_replenishAsReturn=new Set();
-  _renderReplenishModalContent();
-  document.getElementById('replenish-modal').classList.add('show');
+  return {rep,exc,skipped};
 }
 function _pushProduct(item,kind){
   const p=getDB().find(x=>x.name===item.name);if(!p)return 0;
@@ -3868,6 +3908,335 @@ function createReplenishOrder(){
   if(addedR)msg+=' 引き去り'+addedR+'商品';
   msg+='を追加しました';
   showToast(msg);
+}
+
+/* ══ 入れ替え提案（中野さん 2026-11-17） ══
+   新商品を号数を選んで入れる → 必要なフック数 → 足りない分を「品番の年間売上（全号数・全色の合計）が少ない順」に
+   品番ごとまるごと回収 → 残す商品は補充 → 注文カートへ一括（新規導入・補充＝注文、回収＝引き去り）。
+   提案書は「📊 CSV出力（提案書用）」→ 提案書作成ソフト。売上の数字は社内用（提案書には出さない）。
+   年間売上は工場サーバーがクラウドへ送る（get_factory の uriage）。届かないときは売上集計表CSVを読み込める。
+   店の動き（前回在庫＋納品−今回）を加味するのは、訪問データが貯まってから（今は全社の年間売上だけ）。 */
+const URIAGE_KEY='salubre_uriage_v1';
+let _uriMem=null, _uriIdx=null;
+function loadUriage(){
+  if(_uriMem) return _uriMem;
+  try{ _uriMem=JSON.parse(localStorage.getItem(URIAGE_KEY)||'null'); }catch(e){ _uriMem=null; }
+  return _uriMem;
+}
+function saveUriage(u){
+  if(!u||!u.q){ return false; }
+  _uriMem=u; _uriIdx=null;
+  try{ localStorage.setItem(URIAGE_KEY, JSON.stringify(u)); }catch(e){ showToast('📵 端末の空き容量が足りないため、売上は今回だけ使います'); }
+  return true;
+}
+function _uriNorm(s){
+  return String(s||'').normalize('NFKC').toUpperCase().replace(/[‐‑‒–—―ー−－-]/g,'-').replace(/[\s・･]/g,'');
+}
+// 品番(code)→その品番のJAN一覧。ソルブレは JAN_SKU、GREX は名前（いちばん長く一致する品番）と品番のJAN
+function _uriIndex(){
+  const u=loadUriage(); if(!u) return null;
+  if(_uriIdx&&_uriIdx.u===u) return _uriIdx;
+  const sal={};
+  Object.keys(JAN_SKU).forEach(k=>{ const code=k.split('|')[0]; (sal[code]=sal[code]||[]).push(JAN_SKU[k]); });
+  const grex={};
+  const gp=GREX_PRODUCTS_DB.map(p=>({code:String(p.code),key:_uriNorm(p.name)})).filter(p=>p.key);
+  const own=new Set(gp.map(p=>p.code));
+  Object.entries(u.n||{}).forEach(([jan,nm])=>{
+    let code=null;
+    if(own.has(jan)) code=jan;
+    else{
+      const nk=_uriNorm(nm); let best=null;
+      gp.forEach(p=>{ if(nk.startsWith(p.key)&&(!best||p.key.length>best.key.length)) best=p; });
+      if(best) code=best.code;
+    }
+    if(code)(grex[code]=grex[code]||[]).push(jan);
+  });
+  _uriIdx={u,sal,grex};
+  return _uriIdx;
+}
+// その品番の年間売上数（売上−返品）。売上データに1つもJANが無ければ null（新しい品番など）
+function uriageOfProduct(brand, code){
+  const ix=_uriIndex(); if(!ix) return null;
+  const jans=(brand==='grex'?ix.grex:ix.sal)[String(code)]||[];
+  let found=false,sum=0;
+  [...new Set(jans)].forEach(j=>{ if(Object.prototype.hasOwnProperty.call(ix.u.q,j)){ found=true; sum+=Number(ix.u.q[j])||0; } });
+  return found?sum:null;
+}
+function uriageLabel(){
+  const u=loadUriage();
+  if(!u) return '年間売上：まだありません';
+  const f=s=>s?fmtDate(s):'';
+  return '年間売上：'+(u.from?f(u.from)+'〜'+f(u.to):(u.src||''))+(u.fetchedAt?'（'+new Date(u.fetchedAt).toLocaleDateString('ja-JP')+' 取得）':'');
+}
+async function fetchUriageFromCloud(silent){
+  if(!cloudKey()){ if(!silent)showToast('設定でクラウドの合言葉を入れてください'); return false; }
+  let ctl=null,timer=null;
+  try{
+    if(typeof AbortController!=='undefined'){ ctl=new AbortController(); timer=setTimeout(()=>{try{ctl.abort();}catch(_){}} ,25000); }
+    const res=await fetch(FACTORY_URL+'?action=get_factory&key='+encodeURIComponent(cloudKey())+'&t='+Date.now(), ctl?{signal:ctl.signal}:undefined);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const body=await res.json();
+    if(!body||body.ok===false) throw new Error((body&&body.error)||'ng');
+    const d=(typeof body.json==='string'&&body.json)?JSON.parse(body.json):body.json;
+    const u=d&&d.uriage;
+    if(!u||!u.q){ if(!silent)showToast('クラウドにまだ年間売上が届いていません（売上集計表CSVを読み込めます）'); return false; }
+    saveUriage(Object.assign({},u,{fetchedAt:Date.now()}));
+    if(!silent)showToast('✓ 年間売上を取得しました');
+    return true;
+  }catch(e){
+    if(!silent)showToast((e&&e.message==='bad key')?CLOUD_BADKEY_MSG:'年間売上を取得できませんでした（電波・クラウドを確認）');
+    return false;
+  }finally{ if(timer)clearTimeout(timer); }
+}
+// 販売管理の「売上集計表（商品別）」CSVをそのまま読む（コード,名称,…,売上(数量),返品(数量)）
+function _uriParseCsv(text){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'&&text[i+1]==='"'){f+='"';i++;} else if(ch==='"')q=false; else f+=ch; }
+    else if(ch==='"')q=true;
+    else if(ch===','){row.push(f);f='';}
+    else if(ch==='\n'){row.push(f);rows.push(row);row=[];f='';}
+    else if(ch!=='\r')f+=ch;
+  }
+  row.push(f);rows.push(row);
+  const hi=rows.findIndex(r=>r[0]==='コード'&&r.includes('売上(数量)'));
+  if(hi<0) return null;
+  const iq=rows[hi].indexOf('売上(数量)'), ir=rows[hi].indexOf('返品(数量)');
+  const num=s=>Math.round(parseFloat(String(s||'0').replace(/,/g,''))||0);
+  const xl=v=>{const n=parseInt(v);if(!n)return '';const d=new Date(Date.UTC(1899,11,30)+n*86400000);return d.toISOString().slice(0,10);};
+  const qm={},nm={};
+  rows.slice(hi+1).forEach(r=>{
+    const jan=String(r[0]||'').trim();
+    if(!/^456021\d{7}$|^456042\d{7}$/.test(jan)) return;
+    qm[jan]=num(r[iq])-(ir>=0?num(r[ir]):0);
+    if(jan.startsWith('4560421')) nm[jan]=String(r[1]||'').trim();
+  });
+  if(!Object.keys(qm).length) return null;
+  const per=rows[1]||[];
+  return {src:'CSV読み込み',from:xl(per[7]),to:xl(per[8]),q:qm,n:nm,fetchedAt:Date.now()};
+}
+function importUriageCSV(input){
+  const file=input.files&&input.files[0]; if(!file)return;
+  file.arrayBuffer().then(buf=>{
+    let text;
+    try{ text=new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(e){ text=new TextDecoder('shift_jis').decode(buf); }
+    const u=_uriParseCsv(text.replace(/^\ufeff/,''));
+    if(!u){ showToast('売上集計表（商品別）のCSVではないようです'); return; }
+    u.src=file.name; saveUriage(u);
+    showToast('✓ 年間売上を読み込みました（'+Object.keys(u.q).length+'件）');
+    if(document.getElementById('irekae-modal').classList.contains('show')) renderIrekae();
+  }).catch(()=>showToast('読み込めませんでした')).finally(()=>{input.value='';});
+}
+
+let IK=null;   // 入れ替え提案の作業中の状態
+function openIrekaeModal(){
+  if(currentStoreId===null||currentStoreId===''){showToast('店舗を選択してください');return;}
+  const def=loadStoreCapDefault(currentStoreId);
+  if(!def.totalYoko){showToast('⚠ 先に「🏬 陳列設定」で総フック数を入れてください');return;}
+  const stock=loadStoreProducts(currentStoreId);
+  if(!stock.length){showToast('在庫データがありません（先にタナを控えてください）');return;}
+  const sid=currentStoreId;
+  if(!IK||IK.sid!==sid||IK.brand!==currentBrand){
+    IK={sid,brand:currentBrand,newItems:[],over:{},refill:true,search:''};
+  }
+  renderIrekae();
+  forceShowOverlay('irekae-modal');
+  // 売上が無い・古い（7日超）ときは裏で取りに行く
+  const u=loadUriage();
+  if(!u||!u.fetchedAt||Date.now()-u.fetchedAt>7*86400000){
+    fetchUriageFromCloud(!!u).then(ok=>{ if(ok&&document.getElementById('irekae-modal').classList.contains('show')) renderIrekae(); });
+  }
+}
+function _ikStoreName(){ return STORE_LIST[parseInt(IK.sid)]; }
+function _ikHooksOfNew(it,mode){ return mode==='separated'?it.sizes.length*it.colors.length:it.sizes.length; }
+function _ikValidColors(p){ return (p.colors||[]).filter(c=>c&&c!=='—').length?(p.colors||[]).filter(c=>c&&c!=='—'):(p.colors||['—']); }
+function irekaeAddNew(code){
+  const p=getDB().find(x=>String(x.code)===String(code)); if(!p)return;
+  if(IK.newItems.some(x=>x.code===p.code)){showToast('すでに選んでいます');return;}
+  const sizes=(p.sizes&&p.sizes.length)?p.sizes.filter(s=>s!=='数量'):[];
+  IK.newItems.push({code:p.code,name:p.name,cat:p.cat,allSizes:sizes,sizes:[...sizes],allColors:_ikValidColors(p),colors:_ikValidColors(p)});
+  IK.search=''; renderIrekae();
+}
+function irekaeRemoveNew(i){ IK.newItems.splice(i,1); renderIrekae(); }
+function irekaeToggleSize(i,s){
+  const it=IK.newItems[i]; if(!it)return;
+  it.sizes=it.sizes.includes(s)?it.sizes.filter(x=>x!==s):it.allSizes.filter(x=>it.sizes.includes(x)||x===s);
+  renderIrekae();
+}
+function irekaeToggleColor(i,c){
+  const it=IK.newItems[i]; if(!it)return;
+  if(it.colors.includes(c)){ if(it.colors.length<=1){showToast('カラーは1つ以上');return;} it.colors=it.colors.filter(x=>x!==c); }
+  else it.colors=it.allColors.filter(x=>it.colors.includes(x)||x===c);
+  renderIrekae();
+}
+function irekaeTogglePull(name){
+  const cur=_ikPlan().pulled.has(name);
+  IK.over[name]=cur?'keep':'pull'; renderIrekae();
+}
+function irekaeResetPull(){ IK.over={}; renderIrekae(); }
+// 計算（画面と注文カート投入で同じものを使う）
+function _ikPlan(){
+  const def=loadStoreCapDefault(IK.sid), mode=def.mode||'mixed', cap=def.totalYoko||0;
+  const stock=loadStoreProducts(IK.sid);
+  const excl=getKijun().excludedCats||KIJUN_DEFAULTS.excludedCats;
+  const newNames=new Set(IK.newItems.map(x=>x.name));
+  const used=stock.reduce((s,p)=>s+calcProductHooks(p.colors,mode),0);
+  const need=IK.newItems.reduce((s,it)=>s+_ikHooksOfNew(it,mode),0);
+  const free=cap-used, short=Math.max(0,need-free);
+  const cands=stock.map(p=>{
+    const hooks=calcProductHooks(p.colors,mode);
+    let qty=0;(p.colors||[]).forEach(c=>Object.values(c.sizes||{}).forEach(v=>{const n=parseInt(v);if(n>0)qty+=n;}));
+    return {name:p.name,code:p.code,cat:p.cat,hooks,qty,sales:uriageOfProduct(IK.brand,p.code),prod:p};
+  }).filter(c=>c.hooks>0&&!excl.includes(c.cat)&&!newNames.has(c.name));
+  cands.sort((a,b)=>{
+    const an=a.sales===null, bn=b.sales===null;
+    if(an!==bn) return an?1:-1;
+    return (a.sales||0)-(b.sales||0) || b.hooks-a.hooks;
+  });
+  const pulled=new Set(); let got=0;
+  cands.forEach(c=>{ if(IK.over[c.name]==='pull'){ pulled.add(c.name); got+=c.hooks; } });
+  cands.forEach(c=>{
+    if(got>=short||pulled.has(c.name)||IK.over[c.name]==='keep'||c.sales===null) return;
+    pulled.add(c.name); got+=c.hooks;
+  });
+  const freed=cands.filter(c=>pulled.has(c.name)).reduce((s,c)=>s+c.hooks,0);
+  const after=used+need-freed;
+  // 補充（回収する品番は丸ごと外す）
+  const rep=IK.refill?_calcReplenish(IK.sid,(n)=>pulled.has(n)||newNames.has(n)).rep:[];
+  return {def,mode,cap,stock,used,need,free,short,cands,pulled,freed,after,rep};
+}
+function _ikNewCells(it){
+  const sn=_ikStoreName(), cells={};
+  it.colors.forEach(c=>{ cells[c]={}; it.sizes.forEach(s=>{ const q=Math.max(0,getKijunQty(sn,it.name,c,s)||0); if(q>0)cells[c][s]=q; }); });
+  return cells;
+}
+function renderIrekae(){
+  if(!IK) return;
+  const P=_ikPlan();
+  const yen=v=>'¥'+Math.round(v).toLocaleString();
+  const brandLabel=IK.brand==='grex'?'GREX':'ソルブレ';
+  document.getElementById('irekae-sub').innerHTML='<span style="display:inline-block;background:var(--accent-light);color:var(--accent-dark);font-weight:700;padding:2px 9px;border-radius:6px;margin:0 6px 4px 0">🏪 '+escHtml(_ikStoreName()||'')+'</span>【'+brandLabel+'】 <span style="color:var(--text3)">'+(P.mode==='separated'?'カラー別（号数×カラーで1フック）':'カラー混在（1号数＝1フック）')+'</span>';
+  const chip=(on,label,fn,i)=>`<button data-i="${i}" data-v="${escHtml(label).replace(/"/g,'&quot;')}" onclick="${fn}(+this.dataset.i,this.dataset.v)" style="min-width:44px;height:34px;padding:0 8px;border-radius:6px;font-size:15px;font-family:'DM Mono',monospace;cursor:pointer;border:1.5px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent-light)':'var(--surface)'};color:${on?'var(--accent-dark)':'var(--text3)'};font-weight:${on?700:400}">${escHtml(label)}</button>`;
+  const sec=t=>`<div style="font-size:15px;font-weight:700;color:var(--accent-dark);padding:12px 0 6px;border-top:1px solid var(--border);margin-top:6px">${t}</div>`;
+  let h='';
+  // ① 新商品
+  h+=`<div style="font-size:15px;font-weight:700;color:var(--accent-dark);padding:2px 0 6px">① 入れる新商品と号数</div>`;
+  IK.newItems.forEach((it,i)=>{
+    const hk=_ikHooksOfNew(it,P.mode);
+    const cells=_ikNewCells(it); let q=0;Object.values(cells).forEach(m=>Object.values(m).forEach(v=>q+=v));
+    h+=`<div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--surface)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px">
+        <span style="font-size:17px;font-weight:700">${escHtml(it.name)}</span>
+        <span style="display:flex;gap:6px;align-items:center"><span style="font-size:14px;font-weight:700;color:var(--accent);background:var(--accent-light);border-radius:12px;padding:2px 10px">🪝 ${hk}フック</span>
+        <button onclick="irekaeRemoveNew(${i})" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:14px;padding:3px 8px;cursor:pointer">✕</button></span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">${it.allSizes.map(s=>chip(it.sizes.includes(s),s,'irekaeToggleSize',i)).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">${it.allColors.map(c=>chip(it.colors.includes(c),c,'irekaeToggleColor',i)).join('')}
+        <span style="font-size:13px;color:var(--text3);margin-left:auto">店の比率で 計<b style="color:var(--text)">${q}</b>本</span></div>
+    </div>`;
+  });
+  const ql=(IK.search||'').trim();
+  const hits=ql?getDB().filter(p=>(p.name.includes(ql)||p.cat.includes(ql))&&!IK.newItems.some(x=>x.code===p.code)).slice(0,12):[];
+  h+=`<input id="irekae-search" value="${escHtml(IK.search||'')}" oninput="IK.search=this.value;_ikRenderHits()" placeholder="🔍 新商品を探す（商品名・系列）" style="width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:16px;background:var(--surface);color:var(--text);font-family:'Noto Sans JP',sans-serif">
+    <div id="irekae-hits">${_ikHitsHtml(hits)}</div>`;
+  // ② フック収支
+  h+=sec('② フック収支（上限 '+P.cap+'）');
+  const box=(l,v,s,c)=>`<div style="flex:1;min-width:70px;border:1px solid ${c||'var(--border)'};border-radius:8px;padding:6px 8px;background:var(--surface)"><div style="font-size:12px;color:var(--text3)">${l}</div><div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${c||'var(--text)'}">${v}</div><div style="font-size:12px;color:var(--text3)">${s}</div></div>`;
+  const over=P.after>P.cap;
+  h+=`<div style="display:flex;gap:6px;flex-wrap:wrap">
+    ${box('今の使用',P.used,'空き '+P.free)}
+    ${box('新商品に必要','+'+P.need,'フック')}
+    ${box('足りない分',P.short,'回収で空ける',P.short?'var(--danger)':'')}
+    ${box('入れ替え後',P.after+'/'+P.cap,over?(P.after-P.cap)+'フック超過':'残り '+(P.cap-P.after),over?'var(--danger)':'var(--success)')}
+  </div>`;
+  // ③ 回収候補
+  h+=sec('③ 回収する品番（年間売上の少ない順・品番ごとまるごと）');
+  h+=`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text3);margin-bottom:6px">
+    <span style="flex:1;min-width:160px">${escHtml(uriageLabel())}</span>
+    <button onclick="fetchUriageFromCloud().then(ok=>ok&&renderIrekae())" style="height:30px;padding:0 10px;border:1px solid var(--accent);color:var(--accent);background:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">☁ 最新を取得</button>
+    <label style="height:30px;line-height:28px;padding:0 10px;border:1px solid var(--border);color:var(--text2);border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">📥 売上CSV<input type="file" accept=".csv,text/csv" style="display:none" onchange="importUriageCSV(this)"></label>
+    ${Object.keys(IK.over).length?`<button onclick="irekaeResetPull()" style="height:30px;padding:0 10px;border:1px solid var(--border);color:var(--text2);background:none;border-radius:6px;font-size:13px;cursor:pointer">自動に戻す</button>`:''}
+  </div>`;
+  if(!loadUriage()) h+=`<div style="background:var(--warn-light,#fff6e5);border:1px solid var(--warn);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--warn);margin-bottom:6px">年間売上がまだ無いため、自動で選べません。「☁ 最新を取得」か「📥 売上CSV」で読み込むか、下の品番を手で選んでください。</div>`;
+  const maxS=Math.max(1,...P.cands.map(c=>c.sales||0));
+  h+=P.cands.map(c=>{
+    const on=P.pulled.has(c.name), kept=IK.over[c.name]==='keep';
+    const tag=on?(IK.over[c.name]==='pull'?'手で回収':'まるごと回収'):(kept?'🔒 残す':(c.sales===null?'売上データなし（新しい品番？）':''));
+    return `<div data-n="${escHtml(c.name).replace(/"/g,'&quot;')}" onclick="irekaeTogglePull(this.dataset.n)" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-bottom:1px solid var(--border);cursor:pointer;background:${on?'var(--danger-light)':'transparent'};border-left:3px solid ${on?'var(--danger)':'transparent'}">
+      <span style="font-size:18px;width:22px;text-align:center">${on?'☑':(kept?'🔒':'☐')}</span>
+      <span style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700">${escHtml(c.name)}</span>
+        <span style="display:block;font-size:12px;color:${on?'var(--danger)':'var(--text3)'};font-weight:${on?700:400}">${tag||'&nbsp;'}</span></span>
+      <span style="width:22%;max-width:120px"><span style="display:block;height:6px;border-radius:3px;background:var(--accent-dark);opacity:.55;width:${c.sales===null?0:Math.max(2,c.sales/maxS*100)}%"></span></span>
+      <span style="font-family:'DM Mono',monospace;font-size:14px;text-align:right;width:56px">${c.sales===null?'—':c.sales.toLocaleString()}</span>
+      <span style="font-size:13px;color:var(--text3);text-align:right;white-space:nowrap;min-width:78px">🪝${c.hooks}／${c.qty}本</span>
+    </div>`;
+  }).join('')||'<div style="color:var(--text3);font-size:14px;padding:8px">回収できる品番がありません</div>';
+  h+=`<div style="font-size:12px;color:var(--text3);padding:6px 2px">数字は品番の年間売上数（全号数・全色の合計・社内用。提案書には出しません）。行を押すと回収する／残すを切り替えます。品番ごと回収するので、必要より多く空くことがあります。</div>`;
+  // ④ 補充
+  const repQty=P.rep.reduce((s,r)=>s+r.need,0), repNames=new Set(P.rep.map(r=>r.name));
+  h+=sec('④ 残す商品の補充');
+  h+=`<label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer"><input type="checkbox" ${IK.refill?'checked':''} onchange="IK.refill=this.checked;renderIrekae()" style="width:20px;height:20px"> 補充も一緒に入れる（今の補充発注と同じ計算・回収する品番は除く）</label>`;
+  if(IK.refill) h+=`<div style="font-size:14px;color:var(--text2);padding:4px 0">${repNames.size}品番・計${repQty}本</div>`;
+  // 金額
+  let newQ=0,newA=0; IK.newItems.forEach(it=>{const cells=_ikNewCells(it);let q=0;Object.values(cells).forEach(m=>Object.values(m).forEach(v=>q+=v));newQ+=q;newA+=_replenishAmt(it.name,q);});
+  let repA=0; const repBy={}; P.rep.forEach(r=>{repBy[r.name]=(repBy[r.name]||0)+r.need;}); Object.entries(repBy).forEach(([n,q])=>repA+=_replenishAmt(n,q));
+  let pullQ=0,pullA=0; P.cands.filter(c=>P.pulled.has(c.name)).forEach(c=>{pullQ+=c.qty;pullA+=_replenishAmt(c.name,c.qty);});
+  const row=(l,v,col)=>`<div style="display:flex;justify-content:space-between;font-size:15px"><span>${l}</span><span style="font-family:'DM Mono',monospace;font-weight:700;color:${col||'var(--text)'}">${v}</span></div>`;
+  h+=`<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-top:8px;display:flex;flex-direction:column;gap:3px">
+    ${row('新規導入 '+newQ+'本（卸値）',yen(newA))}
+    ${IK.refill?row('補充 '+repQty+'本',yen(repA)):''}
+    ${row('回収（引き去り） '+pullQ+'本','−'+yen(pullA),'var(--danger)')}
+    <div style="border-top:1px solid var(--border);margin-top:3px;padding-top:4px">${row('差引',yen(newA+repA-pullA))}</div>
+  </div>`;
+  if(over) h+=`<div style="margin-top:8px;background:var(--danger-light);border:1px solid var(--danger);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--danger);font-weight:700">⚠ まだ ${P.after-P.cap} フック足りません。回収する品番を足すか、新商品の号数を減らしてください</div>`;
+  const keepFocus=document.activeElement&&document.activeElement.id==='irekae-search';
+  document.getElementById('irekae-body').innerHTML=h;
+  document.getElementById('irekae-go').disabled=!IK.newItems.length;
+  if(keepFocus){ const el=document.getElementById('irekae-search'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); } }
+}
+function _ikHitsHtml(hits){
+  return hits.map(p=>`<div data-c="${escHtml(String(p.code)).replace(/"/g,'&quot;')}" onclick="irekaeAddNew(this.dataset.c)" style="padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;gap:8px">
+    <span style="font-size:16px">${escHtml(p.name)}</span><span style="font-size:13px;color:var(--text3);white-space:nowrap">${escHtml(p.cat)}</span></div>`).join('');
+}
+function _ikRenderHits(){
+  const ql=(IK.search||'').trim();
+  const hits=ql?getDB().filter(p=>(p.name.includes(ql)||p.cat.includes(ql))&&!IK.newItems.some(x=>x.code===p.code)).slice(0,12):[];
+  const el=document.getElementById('irekae-hits'); if(el) el.innerHTML=_ikHitsHtml(hits);
+}
+function irekaeToCart(){
+  if(!IK||!IK.newItems.length){showToast('新商品を選んでください');return;}
+  const P=_ikPlan();
+  if(P.after>P.cap && !confirm('フックが '+(P.after-P.cap)+' 本足りませんが、このまま注文カートに入れますか？')) return;
+  const storeName=_ikStoreName();
+  const si=document.getElementById('store-name');if(si&&!si.value){si.value=storeName;if(typeof autoSuggestCustomer==='function')autoSuggestCustomer();}
+  const meta={store:storeName,brand:IK.brand,mode:P.mode,cap:P.cap,before:P.used,date:new Date().toISOString().slice(0,10)};
+  const tagLast=(added,tag)=>{ if(added){ products[products.length-1].irekae=Object.assign({},tag,{meta}); } return added; };
+  let nN=0,nR=0,nP=0,skip=0;
+  addKind='order';
+  IK.newItems.forEach(it=>{
+    const cells=_ikNewCells(it);
+    const colors={}; Object.entries(cells).forEach(([c,m])=>{ if(Object.keys(m).length) colors[c]=m; });
+    if(!Object.keys(colors).length){ skip++; return; }
+    const a=tagLast(_pushProduct({name:it.name,cat:it.cat,colors},'order'),{k:'new',hooks:_ikHooksOfNew(it,P.mode)});
+    a?nN++:skip++;
+  });
+  const byOrder={};
+  P.rep.forEach(r=>{ const o=byOrder[r.name]=byOrder[r.name]||{name:r.name,cat:r.cat,colors:{}}; (o.colors[r.cname]=o.colors[r.cname]||{})[r.buoyancy]=r.need; });
+  Object.values(byOrder).forEach(item=>{ const a=tagLast(_pushProduct(item,'order'),{k:'refill'}); a?nR++:skip++; });
+  addKind='return';
+  P.cands.filter(c=>P.pulled.has(c.name)).forEach(c=>{
+    const colors={};
+    (c.prod.colors||[]).forEach(col=>{ const cn=col.cname||col.colorName||'—'; Object.entries(col.sizes||{}).forEach(([s,v])=>{ const n=parseInt(v); if(n>0)(colors[cn]=colors[cn]||{})[s]=n; }); });
+    if(!Object.keys(colors).length) return;
+    const a=tagLast(_pushProduct({name:c.name,cat:c.cat,colors},'return'),{k:'pull',hooks:c.hooks});
+    a?nP++:skip++;
+  });
+  addKind='order';
+  closeModal('irekae-modal');
+  renderProducts();
+  goScreen('order');
+  showToast('✓ 新規導入'+nN+'・補充'+nR+'・回収'+nP+'品番を注文に入れました'+(skip?'（'+skip+'件はカートに入っていたため入れていません）':''));
 }
 
 /* ══ クラウド同期 ══ */
